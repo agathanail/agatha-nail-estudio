@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -525,17 +526,6 @@ async function saveAdminHours(){
  }
 }
 
-async function restoreAdminSession(){
- const {data:{session}}=await db.auth.getSession();
- if(!session)return;
- try{
-  await verifyAdmin();
-  await showAdminDashboard();
- }catch(e){
-  console.warn(e.message);
- }
-}
-
 $("adminLoginButton").addEventListener("click",adminSignIn);
 $("adminPassword").addEventListener("keydown",e=>{
  if(e.key==="Enter")adminSignIn();
@@ -549,9 +539,10 @@ $("adminLogout").addEventListener("click",async()=>{
 $("saveAdminHours").addEventListener("click",saveAdminHours);
 $("adminAccess").addEventListener("click",openAdminLogin);
 
-// Iniciar la página y restaurar una sesión administrativa válida
-init().then(()=>restoreAdminSession());
+// Iniciar la página sin consultar permisos de administración.
+init();
 </script>
 </body>
 </html>
+
 
