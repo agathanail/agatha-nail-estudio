@@ -98,9 +98,8 @@
 
 <script>
   // CONFIGURACIÓN: completar con los datos públicos de tu proyecto Supabase.
-  const SUPABASE_URL = "PEGAR_AQUI_URL_DEL_PROYECTO";
-  const SUPABASE_ANON_KEY = "PEGAR_AQUI_CLAVE_ANON_PUBLIC";
-
+  const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
   let db = null;
   let services = [];
   let designs = [];
@@ -227,20 +226,53 @@
     $("time").innerHTML = '<option value="">Turno reservado</option>';
   }
 
-  async function init() {
-    if (SUPABASE_URL.startsWith("PEGAR_") || SUPABASE_ANON_KEY.startsWith("PEGAR_")) {
-      message("Falta conectar la página con Supabase. Lo configuraremos en el siguiente paso.", "error");
-      return;
+async function init() {
+  try {
+    $("service").innerHTML =
+      '<option value="">Conectando con Supabase...</option>';
+
+    $("design").innerHTML =
+      '<option value="">Conectando con Supabase...</option>';
+
+    if (!window.supabase || !window.supabase.createClient) {
+      throw new Error("No se pudo cargar la biblioteca de Supabase.");
     }
 
-    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    try {
-      await loadCatalog();
-    } catch (error) {
-      message("No pudimos cargar los servicios. Revisaremos la conexión.", "error");
+    if (
+      !SUPABASE_URL.startsWith("https://") ||
+      !SUPABASE_ANON_KEY.startsWith("sb_publishable_")
+    ) {
+      throw new Error("La configuración de Supabase es incorrecta.");
     }
+
+    db = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    await loadCatalog();
+
+    message("¡Servicios y diseños cargados correctamente! 💗", "ok");
+
+  } catch (error) {
+    console.error("ERROR REAL DE INICIO:", error);
+
+    $("service").innerHTML =
+      '<option value="">Error al cargar servicios</option>';
+
+    $("design").innerHTML =
+      '<option value="">Error al cargar diseños</option>';
+
+    const detalle = [
+      error.message,
+      error.details,
+      error.hint,
+      error.code
+    ].filter(Boolean).join(" | ");
+
+    message("Error de conexión: " + detalle, "error");
   }
+}
 
   $("service").addEventListener("change", updatePrice);
   $("design").addEventListener("change", updatePrice);
