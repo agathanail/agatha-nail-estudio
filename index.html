@@ -28,6 +28,8 @@
     .price strong{color:#965e66;font-size:20px}
     button{border:0;border-radius:12px;padding:14px 18px;background:#a66f77;color:white;font:inherit;font-weight:700;cursor:pointer;width:100%;margin-top:16px}
     button:disabled{opacity:.5;cursor:not-allowed}
+    .whatsapp-button{display:block;text-align:center;text-decoration:none;border-radius:12px;padding:14px 18px;background:#25a85a;color:white;font-weight:700;margin-top:12px}
+    .whatsapp-button[hidden]{display:none}
     .hint{font-size:12px;color:#9b8583;line-height:1.5}
     #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px}
     #message.ok{display:block;background:#edf7ef;color:#326b43}
@@ -93,6 +95,10 @@
       <textarea id="notes" placeholder="Dejanos un comentario..."></textarea>
       <button type="button" id="book">Confirmar reserva</button>
       <div id="message"></div>
+
+      <a id="whatsappButton" class="whatsapp-button" href="#" target="_blank" rel="noopener noreferrer" hidden>
+        💚 Enviar mi reserva por WhatsApp
+      </a>
     </section>
   </main>
 
@@ -104,6 +110,9 @@
 <script>
   const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
+
+  // WhatsApp de la hermana de Ágatha
+  const WHATSAPP_NUMBER = "5493704564674";
 
   let db = null;
   let services = [];
@@ -254,6 +263,36 @@
     message("¡Ese horario está disponible! 💗", "ok");
   }
 
+  // PREPARAR EL MENSAJE PARA WHATSAPP
+  function prepareWhatsAppMessage(reservation) {
+    const dateText = new Date(
+      reservation.date + "T00:00:00"
+    ).toLocaleDateString("es-AR");
+
+    const reservationMessage = [
+      "💗 Nueva reserva - Ágatha Nail Estudio",
+      "",
+      "Hola, quiero confirmar mi turno.",
+      "👤 Nombre: " + reservation.name,
+      "📞 Teléfono: " + reservation.phone,
+      "💅 Servicio: " + reservation.service.name,
+      "🎨 Diseño: " + reservation.design.name,
+      "📅 Fecha: " + dateText,
+      "🕒 Horario: " + reservation.time,
+      "💰 Precio: " + money(
+        (reservation.service.price || 0) +
+        (reservation.design.extra_price || 0)
+      ),
+      reservation.notes ? "📝 Nota: " + reservation.notes : ""
+    ].filter(Boolean).join("\n");
+
+    $("whatsappButton").href =
+      "https://wa.me/" + WHATSAPP_NUMBER +
+      "?text=" + encodeURIComponent(reservationMessage);
+
+    $("whatsappButton").hidden = false;
+  }
+
   // REGISTRAR LA RESERVA
   async function createBooking() {
     const service = selectedService();
@@ -262,6 +301,9 @@
     const phone = $("phone").value.trim();
     const date = $("date").value;
     const time = $("time").value;
+
+    // Ocultar el botón anterior si se está haciendo otra reserva
+    $("whatsappButton").hidden = true;
 
     if (!service || !design || !date || !time || !name || !phone) {
       message("Completá el servicio, diseño, fecha, horario, nombre y teléfono.", "error");
@@ -298,6 +340,17 @@
       "¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗",
       "ok"
     );
+
+    // Mostrar el botón de WhatsApp solo si la reserva se guardó bien
+    prepareWhatsAppMessage({
+      name,
+      phone,
+      date,
+      time,
+      service,
+      design,
+      notes: $("notes").value.trim()
+    });
 
     $("time").disabled = true;
     $("timeInfo").textContent = "¡Turno reservado! 💗";
@@ -399,5 +452,3 @@
 </script>
 </body>
 </html>
-
-
