@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -35,22 +34,45 @@ button:disabled{opacity:.5;cursor:not-allowed}
 #message.ok{display:block;background:#edf7ef;color:#326b43}
 #message.error{display:block;background:#fff0ee;color:#9a4545}
 footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
-.admin-access{display:inline-block;margin-top:12px;color:#a66f77;text-decoration:underline;cursor:pointer}
-.admin-panel{display:none;max-width:900px;margin:20px auto;padding:0 16px 40px}
-.admin-panel .panel{margin-bottom:16px}
-.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
-.admin-row{border:1px solid #f0e1de;border-radius:13px;padding:14px;margin:12px 0;background:#fffdfc}
-.admin-row p{margin:5px 0;font-size:13px;line-height:1.5}
-.admin-row button{width:auto;margin:8px 6px 0 0;padding:10px 13px;font-size:12px}
-.admin-secondary{background:#8d7778}
-.admin-danger{background:#a84e58}
-.admin-success{background:#56856a}
-.admin-small{font-size:12px;color:#907d7b}
-.admin-hours-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #f0e1de}
+
+/* Acceso privado: ícono pequeño y discreto */
+header{position:relative;padding-right:58px}
+.admin-access{position:absolute;top:13px;right:14px;width:34px;height:34px;display:grid;place-items:center;border:1px solid #ead3d0;border-radius:50%;background:#fffaf8;color:#b77d86;opacity:.78;cursor:pointer;text-decoration:none;box-shadow:0 2px 8px #9c777710;transition:opacity .2s,transform .2s}
+.admin-access:hover,.admin-access:focus-visible{opacity:1;transform:scale(1.06);box-shadow:0 4px 12px #9c777725;outline:none}
+.admin-access svg{display:block;width:21px;height:21px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Panel de administración renovado */
+.admin-panel{display:none;max-width:960px;margin:24px auto;padding:0 16px 48px}
+.admin-panel .panel{position:relative;margin-bottom:20px;padding:26px;border:1px solid #eeddda;border-radius:22px;background:linear-gradient(160deg,#fff 0%,#fffaf8 100%);box-shadow:0 12px 35px #8d646410}
+.admin-panel .step{display:inline-block;padding:6px 11px;border-radius:20px;background:#f8e9e8;color:#a66f77;font-size:10px;letter-spacing:1.4px}
+.admin-panel h3{font-family:'Playfair Display',serif;font-size:24px;color:#815b61;margin:12px 0 10px}
+.admin-panel label{color:#765f60}
+.admin-panel input{background:#fff;border-color:#eadbd8}
+.admin-panel button{width:auto;min-height:42px;margin:12px 8px 0 0;padding:11px 18px;border-radius:24px;box-shadow:0 4px 12px #a66f7718;transition:transform .2s,filter .2s}
+.admin-panel button:hover{transform:translateY(-1px);filter:brightness(1.04)}
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.admin-row{border:1px solid #f0e1de;border-radius:17px;padding:18px;margin:14px 0;background:#fff;box-shadow:0 5px 16px #9c77770b}
+.admin-row p{margin:7px 0;font-size:13px;line-height:1.55}
+.admin-row p:first-child{color:#765257;font-size:14px}
+.admin-row button{font-size:12px}
+.admin-secondary{background:#9b8585}
+.admin-danger{background:#b65f68}
+.admin-success{background:#7d9a82}
+.admin-small{font-size:12px;color:#907d7b;line-height:1.6}
+.admin-hours-row{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #f0e8e5}
+.admin-hours-row strong{color:#765257}
+.admin-hours-row input[type="checkbox"]{width:auto;accent-color:#a66f77}
+.admin-hours-row input[type="time"]{min-width:0}
 .admin-hours-row label{margin:0}
+
 @media(max-width:560px){
  .brand{font-size:33px}
  .panel{padding:18px}
+ .admin-access{top:12px;right:12px;width:31px;height:31px}
+ .admin-access svg{width:19px;height:19px}
+ .admin-panel .panel{padding:20px}
+ .admin-panel h3{font-size:22px}
  .admin-hours-row{grid-template-columns:1fr 1fr}
  .admin-hours-row strong{grid-column:1/-1}
 }
@@ -59,6 +81,13 @@ footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
 <body>
 
 <header>
+<a class="admin-access" id="adminAccess" href="#adminLogin" aria-label="Acceso privado" title="Acceso privado">
+<svg viewBox="0 0 32 32" aria-hidden="true">
+ <path d="M7.2 18.4c-.6-2.2-.2-4.7 1.1-6.5 1-1.4 2.4-2.2 3.5-1.8 1.2.4 1.3 2 1.1 3.4l-.2 1.4 1.2-7.1c.2-1.4 1.1-2.3 2.1-2.1 1.2.2 1.5 1.3 1.3 2.7l-.8 6.1 1.5-5.5c.4-1.3 1.3-1.9 2.3-1.5 1.1.4 1.2 1.5.8 2.8l-1.4 5.1 1.7-3.7c.6-1.2 1.6-1.5 2.5-.9.9.6.8 1.7.2 2.9l-2.7 5.4c-1.2 2.5-2.8 4.7-5.2 5.5-3.5 1.2-7.2-.9-8-4.2z" fill="#f3c9cc" stroke="#b77d86" stroke-width="1.1" stroke-linejoin="round"/>
+ <path d="M11.6 10.3l2.2.3-.2 2.1-2.2-.3zM15 6.1l2.1.3-.3 2.1-2.1-.3zM19.8 8.2l2 .7-.7 2-2-.7zM23.1 12.8l1.8 1-.9 1.8-1.8-1z" fill="#fffaf8" stroke="#b77d86" stroke-width=".55"/>
+ <path d="M8.2 22.7c2.1 1.2 4.3 1.8 6.6 1.5" fill="none" stroke="#fffaf8" stroke-width="1" stroke-linecap="round"/>
+</svg><span class="sr-only">Acceso privado</span>
+</a>
 <h1 class="brand">Ágatha</h1>
 <p>Nail Estudio · Belleza en tus manos</p>
 </header>
@@ -114,7 +143,6 @@ footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
 <footer>
 <strong>Ágatha Nail Estudio</strong><br>
 Avenida Italia 1402<br>
-<a class="admin-access" id="adminAccess">Administración</a>
 </footer>
 
 <section id="adminLogin" class="admin-panel">
@@ -537,7 +565,10 @@ $("adminLogout").addEventListener("click",async()=>{
  hideAdminSections();
 });
 $("saveAdminHours").addEventListener("click",saveAdminHours);
-$("adminAccess").addEventListener("click",openAdminLogin);
+$("adminAccess").addEventListener("click",e=>{
+ e.preventDefault();
+ openAdminLogin();
+});
 
 // Iniciar la página sin consultar permisos de administración.
 init();
