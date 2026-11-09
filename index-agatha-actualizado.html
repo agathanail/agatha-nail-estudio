@@ -6,9 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ágatha Nail Estudio</title>
   <meta name="description" content="Reservá tu turno en Ágatha Nail Estudio. Avenida Italia 1402.">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -32,7 +30,7 @@
     button{border:0;border-radius:12px;padding:14px 18px;background:#a66f77;color:white;font:inherit;font-weight:700;cursor:pointer;width:100%;margin-top:16px}
     button:disabled{opacity:.5;cursor:not-allowed}
     .hint{font-size:12px;color:#9b8583;line-height:1.5}
-    #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+    #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px;overflow-wrap:anywhere}
     #message.ok{display:block;background:#edf7ef;color:#326b43}
     #message.error{display:block;background:#fff0ee;color:#9a4545}
     footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
@@ -58,19 +56,18 @@
 
       <label for="service">Servicio</label>
       <select id="service">
-        <option value="">Conectando servicios...</option>
+        <option value="">Cargando servicios...</option>
       </select>
 
       <label for="design">Diseño</label>
       <select id="design">
-        <option value="">Conectando diseños...</option>
+        <option value="">Cargando diseños...</option>
       </select>
 
       <div class="price">
         <span>Precio estimado</span>
         <strong id="total">$0</strong>
       </div>
-
       <p class="hint" id="duration"></p>
     </section>
 
@@ -105,7 +102,6 @@
       <textarea id="notes" placeholder="Dejanos un comentario..."></textarea>
 
       <button type="button" id="book">Confirmar reserva</button>
-
       <div id="message" role="status" aria-live="polite"></div>
     </section>
   </main>
@@ -116,121 +112,98 @@
   </footer>
 
 <script>
-"use strict";
+  // CONEXIÓN CON SUPABASE
+  const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
 
-/* =========================================
-   CONEXIÓN CON SUPABASE
-========================================= */
+  let db = null;
+  let services = [];
+  let designs = [];
 
-const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
+  const $ = id => document.getElementById(id);
 
-let db = null;
-let services = [];
-let designs = [];
-let loadingCatalog = false;
-let checkingSlots = false;
-let bookingInProgress = false;
+  const money = value =>
+    "$" + Number(value || 0).toLocaleString("es-AR");
 
-const $ = id => document.getElementById(id);
+  function showMessage(text, type = "error") {
+    $("message").textContent = text;
+    $("message").className = type;
+  }
 
-const money = value =>
-  "$" + Number(value || 0).toLocaleString("es-AR");
+  function errorText(error) {
+    if (!error) return "Error desconocido.";
 
-function showMessage(text, type = "error") {
-  const box = $("message");
-  box.textContent = text;
-  box.className = type;
-}
+    return [
+      error.message,
+      error.details,
+      error.hint,
+      error.code
+    ].filter(Boolean).join(" | ");
+  }
 
-function clearMessage() {
-  $("message").textContent = "";
-  $("message").className = "";
-}
+  function selectedService() {
+    return services.find(
+      item => String(item.id) === String($("service").value)
+    );
+  }
 
-function errorText(error) {
-  if (!error) return "Error desconocido.";
+  function selectedDesign() {
+    return designs.find(
+      item => String(item.id) === String($("design").value)
+    );
+  }
 
-  return [
-    error.message,
-    error.details,
-    error.hint,
-    error.code ? "Código: " + error.code : ""
-  ].filter(Boolean).join(" | ");
-}
+  function updatePrice() {
+    const service = selectedService();
+    const design = selectedDesign();
 
-function selectedService() {
-  return services.find(item => String(item.id) === $("service").value);
-}
+    const total =
+      Number(service?.price || 0) +
+      Number(design?.extra_price || 0);
 
-function selectedDesign() {
-  return designs.find(item => String(item.id) === $("design").value);
-}
+    const duration =
+      Number(service?.duration_minutes || 0) +
+      Number(design?.duration_minutes || 0);
 
-/* =========================================
-   ACTUALIZAR PRECIO Y DURACIÓN
-========================================= */
+    $("total").textContent = money(total);
 
-function updatePrice() {
-  const service = selectedService();
-  const design = selectedDesign();
+    $("duration").textContent = duration
+      ? "Duración aproximada: " + duration + " minutos."
+      : "";
+  }
 
-  const servicePrice = Number(service?.price || 0);
-  const designPrice = Number(design?.extra_price || 0);
+  async function loadCatalog() {
+    $("service").disabled = true;
+    $("design").disabled = true;
 
-  const serviceDuration = Number(service?.duration_minutes || 0);
-  const designDuration = Number(design?.duration_minutes || 0);
+    $("service").innerHTML =
+      '<option value="">Cargando servicios...</option>';
 
-  $("total").textContent = money(servicePrice + designPrice);
+    $("design").innerHTML =
+      '<option value="">Cargando diseños...</option>';
 
-  const duration = serviceDuration + designDuration;
-
-  $("duration").textContent = duration
-    ? "Duración aproximada: " + duration + " minutos."
-    : "";
-}
-
-/* =========================================
-   CARGAR SERVICIOS Y DISEÑOS
-========================================= */
-
-async function loadCatalog() {
-  if (loadingCatalog) return;
-
-  loadingCatalog = true;
-
-  $("service").disabled = true;
-  $("design").disabled = true;
-
-  $("service").innerHTML =
-    '<option value="">Cargando servicios...</option>';
-
-  $("design").innerHTML =
-    '<option value="">Cargando diseños...</option>';
-
-  try {
+    // No se ordena por sort_order para evitar errores
+    // si esa columna no existe en la tabla.
     const [serviceResult, designResult] = await Promise.all([
-      db
-        .from("services")
+      db.from("services")
         .select("*")
         .eq("active", true),
 
-      db
-        .from("design_options")
+      db.from("design_options")
         .select("*")
         .eq("active", true)
     ]);
 
     if (serviceResult.error) {
       throw new Error(
-        "Error en la tabla services: " +
+        "Error consultando services: " +
         errorText(serviceResult.error)
       );
     }
 
     if (designResult.error) {
       throw new Error(
-        "Error en la tabla design_options: " +
+        "Error consultando design_options: " +
         errorText(designResult.error)
       );
     }
@@ -238,290 +211,237 @@ async function loadCatalog() {
     services = serviceResult.data || [];
     designs = designResult.data || [];
 
-    // Ordenar si existe la columna sort_order.
-    services.sort((a, b) =>
-      Number(a.sort_order ?? 9999) - Number(b.sort_order ?? 9999)
-    );
+    $("service").innerHTML =
+      '<option value="">Seleccioná un servicio</option>';
 
-    designs.sort((a, b) =>
-      Number(a.sort_order ?? 9999) - Number(b.sort_order ?? 9999)
-    );
+    $("design").innerHTML =
+      '<option value="">Seleccioná un diseño</option>';
 
-    if (services.length === 0) {
-      $("service").innerHTML =
-        '<option value="">No hay servicios cargados</option>';
-    } else {
-      $("service").innerHTML =
-        '<option value="">Seleccioná un servicio</option>' +
-        services.map(service => `
-          <option value="${String(service.id)}">
-            ${escapeHTML(service.name || "Servicio")} · ${money(service.price)}
-          </option>
-        `).join("");
-    }
+    services.forEach(service => {
+      const option = document.createElement("option");
+      option.value = String(service.id);
+      option.textContent =
+        service.name + " · " + money(service.price);
+      $("service").appendChild(option);
+    });
 
-    if (designs.length === 0) {
-      $("design").innerHTML =
-        '<option value="">No hay diseños cargados</option>';
-    } else {
-      $("design").innerHTML =
-        '<option value="">Seleccioná un diseño</option>' +
-        designs.map(design => `
-          <option value="${String(design.id)}">
-            ${escapeHTML(design.name || "Diseño")}
-            ${Number(design.extra_price || 0) > 0
-              ? " · +" + money(design.extra_price)
-              : " · Sin adicional"}
-          </option>
-        `).join("");
-    }
+    designs.forEach(design => {
+      const option = document.createElement("option");
+      option.value = String(design.id);
+      option.textContent =
+        design.name +
+        (Number(design.extra_price || 0) > 0
+          ? " · +" + money(design.extra_price)
+          : " · Sin adicional");
+      $("design").appendChild(option);
+    });
 
     $("service").disabled = services.length === 0;
     $("design").disabled = designs.length === 0;
 
     updatePrice();
 
-    if (services.length === 0 || designs.length === 0) {
+    if (!services.length || !designs.length) {
       showMessage(
-        "La conexión con Supabase respondió, pero todavía no hay servicios o diseños activos cargados en las tablas.",
+        "La conexión funciona, pero no hay servicios o diseños activos cargados en Supabase.",
         "error"
       );
-    } else {
-      showMessage(
-        "¡Servicios y diseños cargados correctamente!",
-        "ok"
-      );
-    }
-
-  } catch (error) {
-    console.error("Error cargando el catálogo:", error);
-
-    services = [];
-    designs = [];
-
-    $("service").innerHTML =
-      '<option value="">Error al cargar servicios</option>';
-
-    $("design").innerHTML =
-      '<option value="">Error al cargar diseños</option>';
-
-    $("service").disabled = true;
-    $("design").disabled = true;
-
-    showMessage(
-      "No se pudo cargar el catálogo. " + error.message,
-      "error"
-    );
-
-  } finally {
-    loadingCatalog = false;
-  }
-}
-
-/* =========================================
-   EVITAR INSERTAR TEXTO HTML
-========================================= */
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[char]);
-}
-
-/* =========================================
-   CONSULTAR HORARIOS DISPONIBLES
-========================================= */
-
-async function checkSlots() {
-  if (checkingSlots) return;
-
-  const service = selectedService();
-  const design = selectedDesign();
-  const date = $("date").value;
-
-  if (!service || !design || !date) {
-    showMessage(
-      "Elegí un servicio, un diseño y una fecha antes de consultar los horarios.",
-      "error"
-    );
-    return;
-  }
-
-  checkingSlots = true;
-  $("checkSlots").disabled = true;
-  $("checkSlots").textContent = "Consultando horarios...";
-
-  $("time").disabled = true;
-  $("time").innerHTML =
-    '<option value="">Consultando disponibilidad...</option>';
-
-  clearMessage();
-
-  try {
-    const { data, error } = await db.rpc("get_available_slots", {
-      p_service_id: service.id,
-      p_design_option_id: design.id,
-      p_appointment_date: date
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    const slots = Array.isArray(data) ? data : [];
-
-    const normalizedSlots = slots.map(item => {
-      if (typeof item === "string") {
-        return item;
-      }
-
-      return (
-        item.slot_time ||
-        item.appointment_time ||
-        item.available_time ||
-        item.time ||
-        ""
-      );
-    }).filter(Boolean);
-
-    if (normalizedSlots.length === 0) {
-      $("time").innerHTML =
-        '<option value="">No hay horarios disponibles</option>';
-
-      $("time").disabled = true;
-
-      showMessage(
-        "No encontramos horarios disponibles para ese día. Probá con otra fecha.",
-        "error"
-      );
-
       return;
     }
 
-    $("time").innerHTML =
-      '<option value="">Elegí un horario</option>' +
-      normalizedSlots.map(slot => {
-        const value = String(slot);
-        const label = value.slice(0, 5);
-
-        return `
-          <option value="${escapeHTML(value)}">
-            ${escapeHTML(label)}
-          </option>
-        `;
-      }).join("");
-
-    $("time").disabled = false;
-
-    showMessage(
-      "¡Encontramos " + normalizedSlots.length +
-      " horarios disponibles!",
-      "ok"
-    );
-
-  } catch (error) {
-    console.error("Error consultando horarios:", error);
-
-    $("time").innerHTML =
-      '<option value="">No se pudieron consultar los horarios</option>';
-
-    $("time").disabled = true;
-
-    showMessage(
-      "No se pudieron consultar los horarios: " + errorText(error),
-      "error"
-    );
-
-  } finally {
-    checkingSlots = false;
-    $("checkSlots").disabled = false;
-    $("checkSlots").textContent = "Ver horarios disponibles";
-  }
-}
-
-/* =========================================
-   CREAR RESERVA
-========================================= */
-
-async function createBooking() {
-  if (bookingInProgress) return;
-
-  const service = selectedService();
-  const design = selectedDesign();
-
-  const name = $("customer").value.trim();
-  const phone = $("phone").value.trim();
-  const date = $("date").value;
-  const time = $("time").value;
-  const notes = $("notes").value.trim();
-
-  if (!service || !design || !date || !time || !name || !phone) {
-    showMessage(
-      "Completá el servicio, diseño, fecha, horario, nombre y teléfono.",
-      "error"
-    );
-    return;
+    showMessage("Servicios y diseños cargados correctamente.", "ok");
   }
 
-  bookingInProgress = true;
-  $("book").disabled = true;
-  $("book").textContent = "Confirmando reserva...";
-
-  try {
-    const { data, error } = await db.rpc(
-      "create_studio_appointment",
-      {
-        p_service_id: service.id,
-        p_design_option_id: design.id,
-        p_customer_name: name,
-        p_customer_phone: phone,
-        p_appointment_date: date,
-        p_appointment_time: time,
-        p_notes: notes
-      }
-    );
-
-    if (error) {
-      throw error;
+  async function checkSlots() {
+    if (!db) {
+      showMessage("No hay conexión con Supabase.", "error");
+      return;
     }
 
-    showMessage(
-      "¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗",
-      "ok"
-    );
+    const service = selectedService();
+    const design = selectedDesign();
+    const date = $("date").value;
+
+    if (!service || !design || !date) {
+      showMessage(
+        "Elegí un servicio, un diseño y una fecha.",
+        "error"
+      );
+      return;
+    }
 
     $("time").disabled = true;
     $("time").innerHTML =
-      '<option value="">Turno reservado</option>';
+      '<option value="">Consultando horarios...</option>';
 
-    $("customer").value = "";
-    $("phone").value = "";
-    $("notes").value = "";
+    $("checkSlots").disabled = true;
 
-  } catch (error) {
-    console.error("Error creando la reserva:", error);
+    try {
+      const { data, error } = await db.rpc(
+        "get_available_slots",
+        {
+          p_service_id: service.id,
+          p_design_option_id: design.id,
+          p_appointment_date: date
+        }
+      );
 
-    showMessage(
-      "No se pudo confirmar la reserva: " + errorText(error),
-      "error"
-    );
+      if (error) throw error;
 
-  } finally {
-    bookingInProgress = false;
-    $("book").disabled = false;
-    $("book").textContent = "Confirmar reserva";
+      const slots = data || [];
+
+      $("time").innerHTML = slots.length
+        ? '<option value="">Elegí un horario</option>'
+        : '<option value="">No hay horarios disponibles</option>';
+
+      slots.forEach(slot => {
+        const value = slot.slot_time || slot;
+        const option = document.createElement("option");
+
+        option.value = String(value);
+        option.textContent = String(value).slice(0, 5);
+
+        $("time").appendChild(option);
+      });
+
+      $("time").disabled = !slots.length;
+
+      if (slots.length) {
+        showMessage(
+          "¡Estos son los horarios disponibles!",
+          "ok"
+        );
+      } else {
+        showMessage(
+          "No hay horarios disponibles para esa fecha.",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Error consultando horarios:", error);
+
+      $("time").innerHTML =
+        '<option value="">Error al consultar horarios</option>';
+
+      showMessage(
+        "Error al consultar horarios: " + errorText(error),
+        "error"
+      );
+    } finally {
+      $("checkSlots").disabled = false;
+    }
   }
-}
 
-/* =========================================
-   FECHAS
-========================================= */
+  async function createBooking() {
+    if (!db) {
+      showMessage("No hay conexión con Supabase.", "error");
+      return;
+    }
 
-function configureDates() {
+    const service = selectedService();
+    const design = selectedDesign();
+    const name = $("customer").value.trim();
+    const phone = $("phone").value.trim();
+    const date = $("date").value;
+    const time = $("time").value;
+
+    if (!service || !design || !date || !time || !name || !phone) {
+      showMessage(
+        "Completá el servicio, diseño, fecha, horario, nombre y teléfono.",
+        "error"
+      );
+      return;
+    }
+
+    $("book").disabled = true;
+    $("book").textContent = "Confirmando...";
+
+    try {
+      const { error } = await db.rpc(
+        "create_studio_appointment",
+        {
+          p_service_id: service.id,
+          p_design_option_id: design.id,
+          p_customer_name: name,
+          p_customer_phone: phone,
+          p_appointment_date: date,
+          p_appointment_time: time,
+          p_notes: $("notes").value.trim()
+        }
+      );
+
+      if (error) throw error;
+
+      showMessage(
+        "¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗",
+        "ok"
+      );
+
+      $("time").disabled = true;
+      $("time").innerHTML =
+        '<option value="">Turno reservado</option>';
+
+    } catch (error) {
+      console.error("Error creando reserva:", error);
+
+      showMessage(
+        "No se pudo registrar la reserva: " + errorText(error),
+        "error"
+      );
+    } finally {
+      $("book").disabled = false;
+      $("book").textContent = "Confirmar reserva";
+    }
+  }
+
+  async function init() {
+    try {
+      if (!window.supabase || !window.supabase.createClient) {
+        throw new Error(
+          "No se pudo cargar la biblioteca de Supabase. Revisá tu conexión a internet."
+        );
+      }
+
+      if (
+        !SUPABASE_URL.startsWith("https://") ||
+        !SUPABASE_ANON_KEY.startsWith("sb_publishable_")
+      ) {
+        throw new Error(
+          "La URL o la clave pública de Supabase no tienen un formato válido."
+        );
+      }
+
+      db = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      await loadCatalog();
+
+    } catch (error) {
+      console.error("Error inicializando la página:", error);
+
+      $("service").innerHTML =
+        '<option value="">No se pudo conectar</option>';
+
+      $("design").innerHTML =
+        '<option value="">No se pudo conectar</option>';
+
+      $("service").disabled = true;
+      $("design").disabled = true;
+
+      showMessage(
+        "Error de conexión con Supabase: " + errorText(error),
+        "error"
+      );
+    }
+  }
+
+  $("service").addEventListener("change", updatePrice);
+  $("design").addEventListener("change", updatePrice);
+  $("checkSlots").addEventListener("click", checkSlots);
+  $("book").addEventListener("click", createBooking);
+
   const today = new Date();
 
   const localToday = new Date(
@@ -537,91 +457,12 @@ function configureDates() {
 
   $("date").min = localToday;
   $("date").max = localMax;
-}
 
-/* =========================================
-   INICIALIZACIÓN
-========================================= */
-
-async function init() {
-  try {
-    if (!window.supabase || !window.supabase.createClient) {
-      throw new Error(
-        "No se pudo cargar la biblioteca de Supabase. Revisá tu conexión a internet."
-      );
-    }
-
-    if (
-      !SUPABASE_URL.startsWith("https://") ||
-      !SUPABASE_ANON_KEY.startsWith("sb_publishable_")
-    ) {
-      throw new Error(
-        "La URL o la clave pública de Supabase no tienen un formato válido."
-      );
-    }
-
-    db = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-    );
-
-    await loadCatalog();
-
-  } catch (error) {
-    console.error("Error inicializando la página:", error);
-
-    $("service").innerHTML =
-      '<option value="">No se pudo conectar</option>';
-
-    $("design").innerHTML =
-      '<option value="">No se pudo conectar</option>';
-
-    $("service").disabled = true;
-    $("design").disabled = true;
-
-    showMessage(
-      "Error de conexión con Supabase: " + errorText(error),
-      "error"
-    );
-  }
-}
-
-/* =========================================
-   EVENTOS
-========================================= */
-
-$("service").addEventListener("change", () => {
-  updatePrice();
-  $("time").disabled = true;
-  $("time").innerHTML =
-    '<option value="">Volvé a consultar los horarios</option>';
-  clearMessage();
-});
-
-$("design").addEventListener("change", () => {
-  updatePrice();
-  $("time").disabled = true;
-  $("time").innerHTML =
-    '<option value="">Volvé a consultar los horarios</option>';
-  clearMessage();
-});
-
-$("date").addEventListener("change", () => {
-  $("time").disabled = true;
-  $("time").innerHTML =
-    '<option value="">Volvé a consultar los horarios</option>';
-  clearMessage();
-});
-
-$("checkSlots").addEventListener("click", checkSlots);
-$("book").addEventListener("click", createBooking);
-
-configureDates();
-init();
-
+  init();
 </script>
 </body>
 </html>
+
 
 
 
