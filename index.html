@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ágatha Nail Estudio</title>
+  <meta name="description" content="Reservá tu turno en Ágatha Nail Estudio. Avenida Italia 1402.">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;background:#fbf5f3;color:#493b3b;font-family:'DM Sans',sans-serif}
+    header{text-align:center;padding:42px 18px 32px;background:linear-gradient(145deg,#f3dedb,#fff8f5)}
+    .brand{font-family:'Playfair Display',serif;font-size:38px;color:#865d62;margin:0}
+    header p{color:#8d7374;margin:9px 0 0;letter-spacing:2px;font-size:11px;text-transform:uppercase}
+    main{max-width:680px;margin:28px auto;padding:0 16px 50px}
+    .intro{text-align:center;margin-bottom:25px}
+    h2{font-family:'Playfair Display',serif;color:#865d62;font-size:27px;font-weight:600}
+    .intro p{color:#907d7b;font-size:14px}
+    .panel{background:white;border:1px solid #f0e1de;border-radius:20px;padding:22px;margin-bottom:18px;box-shadow:0 8px 25px #9c777710}
+    .step{font-size:11px;color:#b17e82;letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
+    h3{font-size:17px;margin:8px 0 16px;color:#654d4e}
+    label{display:block;font-size:13px;font-weight:600;margin:13px 0 7px}
+    select,input,textarea{width:100%;padding:13px;border:1px solid #e8d8d6;border-radius:11px;background:#fffdfc;color:#493b3b;font:inherit;font-size:14px}
+    textarea{min-height:75px;resize:vertical}
+    .price{background:#fbf0ee;border-radius:12px;padding:15px;margin-top:16px;display:flex;justify-content:space-between;gap:10px}
+    .price strong{color:#965e66;font-size:20px}
+    button{border:0;border-radius:12px;padding:14px 18px;background:#a66f77;color:white;font:inherit;font-weight:700;cursor:pointer;width:100%;margin-top:16px}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .hint{font-size:12px;color:#9b8583;line-height:1.5}
+    #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px}
+    #message.ok{display:block;background:#edf7ef;color:#326b43}
+    #message.error{display:block;background:#fff0ee;color:#9a4545}
+    footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
+    @media(max-width:480px){.brand{font-size:33px}.panel{padding:18px}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1 class="brand">Ágatha</h1>
+    <p>Nail Estudio · Belleza en tus manos</p>
+  </header>
+
+  <main>
+    <section class="intro">
+      <h2>Tu momento, tu belleza</h2>
+      <p>Elegí tu servicio, diseño y horario. ¡Te esperamos!</p>
+    </section>
+
+    <section class="panel">
+      <div class="step">Paso 1</div>
+      <h3>Elegí tu servicio</h3>
+      <label for="service">Servicio</label>
+      <select id="service"><option value="">Cargando servicios...</option></select>
+
+      <label for="design">Diseño</label>
+      <select id="design"><option value="">Cargando diseños...</option></select>
+
+      <div class="price">
+        <span>Precio estimado</span>
+        <strong id="total">$0</strong>
+      </div>
+      <p class="hint" id="duration"></p>
+    </section>
+
+    <section class="panel">
+      <div class="step">Paso 2</div>
+      <h3>Elegí el día y horario</h3>
+      <label for="date">Fecha</label>
+      <input id="date" type="date">
+      <button type="button" id="checkSlots">Ver horarios disponibles</button>
+      <label for="time">Horario disponible</label>
+      <select id="time" disabled>
+        <option value="">Primero elegí una fecha</option>
+      </select>
+      <p class="hint">Los turnos están sujetos a disponibilidad.</p>
+    </section>
+
+    <section class="panel">
+      <div class="step">Paso 3</div>
+      <h3>Tus datos</h3>
+      <label for="customer">Nombre y apellido</label>
+      <input id="customer" type="text" placeholder="Tu nombre completo" autocomplete="name">
+      <label for="phone">Teléfono</label>
+      <input id="phone" type="tel" placeholder="Tu número de teléfono" autocomplete="tel">
+      <label for="notes">¿Querés contarnos algo? (opcional)</label>
+      <textarea id="notes" placeholder="Dejanos un comentario..."></textarea>
+      <button type="button" id="book">Confirmar reserva</button>
+      <div id="message"></div>
+    </section>
+  </main>
+
+  <footer>
+    <strong>Ágatha Nail Estudio</strong><br>
+    Avenida Italia 1402
+  </footer>
+
+<script>
+  // CONFIGURACIÓN: completar con los datos públicos de tu proyecto Supabase.
+  const SUPABASE_URL = "PEGAR_AQUI_URL_DEL_PROYECTO";
+  const SUPABASE_ANON_KEY = "PEGAR_AQUI_CLAVE_ANON_PUBLIC";
+
+  let db = null;
+  let services = [];
+  let designs = [];
+
+  const $ = id => document.getElementById(id);
+  const money = value => "$" + Number(value || 0).toLocaleString("es-AR");
+
+  function message(text, type) {
+    $("message").textContent = text;
+    $("message").className = type;
+  }
+
+  function selectedService() {
+    return services.find(item => item.id === $("service").value);
+  }
+
+  function selectedDesign() {
+    return designs.find(item => item.id === $("design").value);
+  }
+
+  function updatePrice() {
+    const service = selectedService();
+    const design = selectedDesign();
+    const total = (service?.price || 0) + (design?.extra_price || 0);
+    const duration = (service?.duration_minutes || 0) + (design?.duration_minutes || 0);
+    $("total").textContent = money(total);
+    $("duration").textContent = duration ? "Duración aproximada: " + duration + " minutos." : "";
+  }
+
+  async function loadCatalog() {
+    const [serviceResult, designResult] = await Promise.all([
+      db.from("services").select("*").eq("active", true).order("sort_order"),
+      db.from("design_options").select("*").eq("active", true)
+    ]);
+
+    if (serviceResult.error) throw serviceResult.error;
+    if (designResult.error) throw designResult.error;
+
+    services = serviceResult.data || [];
+    designs = designResult.data || [];
+
+    $("service").innerHTML = '<option value="">Seleccioná un servicio</option>' +
+      services.map(s => `<option value="${s.id}">${s.name} · ${money(s.price)}</option>`).join("");
+
+    $("design").innerHTML = '<option value="">Seleccioná un diseño</option>' +
+      designs.map(d => `<option value="${d.id}">${d.name}${d.extra_price ? " · +" + money(d.extra_price) : " · Sin adicional"}</option>`).join("");
+
+    updatePrice();
+  }
+
+  async function checkSlots() {
+    const service = selectedService();
+    const design = selectedDesign();
+    const date = $("date").value;
+
+    if (!service || !design || !date) {
+      message("Elegí un servicio, un diseño y una fecha.", "error");
+      return;
+    }
+
+    $("time").disabled = true;
+    $("time").innerHTML = '<option value="">Consultando horarios...</option>';
+
+    const { data, error } = await db.rpc("get_available_slots", {
+      p_service_id: service.id,
+      p_design_option_id: design.id,
+      p_appointment_date: date
+    });
+
+    if (error) {
+      $("time").innerHTML = '<option value="">No se pudieron consultar</option>';
+      message("Todavía estamos configurando la disponibilidad de turnos. Volvé a intentar más tarde.", "error");
+      return;
+    }
+
+    const slots = data || [];
+    $("time").innerHTML = slots.length
+      ? '<option value="">Elegí un horario</option>' + slots.map(s => {
+          const value = s.slot_time || s;
+          return `<option value="${value}">${String(value).slice(0,5)}</option>`;
+        }).join("")
+      : '<option value="">No hay horarios disponibles</option>';
+
+    $("time").disabled = !slots.length;
+    if (slots.length) message("¡Estos son los horarios disponibles!", "ok");
+  }
+
+  async function createBooking() {
+    const service = selectedService();
+    const design = selectedDesign();
+    const name = $("customer").value.trim();
+    const phone = $("phone").value.trim();
+    const date = $("date").value;
+    const time = $("time").value;
+
+    if (!service || !design || !date || !time || !name || !phone) {
+      message("Completá el servicio, diseño, fecha, horario, nombre y teléfono.", "error");
+      return;
+    }
+
+    $("book").disabled = true;
+    $("book").textContent = "Confirmando...";
+
+    const { error } = await db.rpc("create_studio_appointment", {
+      p_service_id: service.id,
+      p_design_option_id: design.id,
+      p_customer_name: name,
+      p_customer_phone: phone,
+      p_appointment_date: date,
+      p_appointment_time: time,
+      p_notes: $("notes").value.trim()
+    });
+
+    $("book").disabled = false;
+    $("book").textContent = "Confirmar reserva";
+
+    if (error) {
+      message("Ese horario puede haberse ocupado. Consultá nuevamente los horarios disponibles.", "error");
+      return;
+    }
+
+    message("¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗", "ok");
+    $("time").disabled = true;
+    $("time").innerHTML = '<option value="">Turno reservado</option>';
+  }
+
+  async function init() {
+    if (SUPABASE_URL.startsWith("PEGAR_") || SUPABASE_ANON_KEY.startsWith("PEGAR_")) {
+      message("Falta conectar la página con Supabase. Lo configuraremos en el siguiente paso.", "error");
+      return;
+    }
+
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    try {
+      await loadCatalog();
+    } catch (error) {
+      message("No pudimos cargar los servicios. Revisaremos la conexión.", "error");
+    }
+  }
+
+  $("service").addEventListener("change", updatePrice);
+  $("design").addEventListener("change", updatePrice);
+  $("checkSlots").addEventListener("click", checkSlots);
+  $("book").addEventListener("click", createBooking);
+
+  const today = new Date();
+  const localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + 30);
+  const localMax = new Date(maxDate.getTime() - maxDate.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+  $("date").min = localToday;
+  $("date").max = localMax;
+
+  init();
+</script>
+</body>
+</html>
