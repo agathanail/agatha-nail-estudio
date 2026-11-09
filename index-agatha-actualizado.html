@@ -5,269 +5,856 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ágatha Nail Estudio</title>
   <meta name="description" content="Reservá tu turno en Ágatha Nail Estudio. Avenida Italia 1402.">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+
   <style>
     *{box-sizing:border-box}
-    body{margin:0;background:#fbf5f3;color:#493b3b;font-family:'DM Sans',sans-serif}
-    header{text-align:center;padding:42px 18px 32px;background:linear-gradient(145deg,#f3dedb,#fff8f5)}
-    .brand{font-family:'Playfair Display',serif;font-size:38px;color:#865d62;margin:0}
-    header p{color:#8d7374;margin:9px 0 0;letter-spacing:2px;font-size:11px;text-transform:uppercase}
-    main{max-width:680px;margin:28px auto;padding:0 16px 50px}
-    .intro{text-align:center;margin-bottom:25px}
-    h2{font-family:'Playfair Display',serif;color:#865d62;font-size:27px;font-weight:600}
-    .intro p{color:#907d7b;font-size:14px}
-    .panel{background:white;border:1px solid #f0e1de;border-radius:20px;padding:22px;margin-bottom:18px;box-shadow:0 8px 25px #9c777710}
-    .step{font-size:11px;color:#b17e82;letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
-    h3{font-size:17px;margin:8px 0 16px;color:#654d4e}
-    label{display:block;font-size:13px;font-weight:600;margin:13px 0 7px}
-    select,input,textarea{width:100%;padding:13px;border:1px solid #e8d8d6;border-radius:11px;background:#fffdfc;color:#493b3b;font:inherit;font-size:14px}
-    textarea{min-height:75px;resize:vertical}
-    .price{background:#fbf0ee;border-radius:12px;padding:15px;margin-top:16px;display:flex;justify-content:space-between;gap:10px}
-    .price strong{color:#965e66;font-size:20px}
-    button{border:0;border-radius:12px;padding:14px 18px;background:#a66f77;color:white;font:inherit;font-weight:700;cursor:pointer;width:100%;margin-top:16px}
-    button:disabled{opacity:.5;cursor:not-allowed}
-    .hint{font-size:12px;color:#9b8583;line-height:1.5}
-    #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
-    #message.ok{display:block;background:#edf7ef;color:#326b43}
-    #message.error{display:block;background:#fff0ee;color:#9a4545}
-    footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
-    @media(max-width:480px){.brand{font-size:33px}.panel{padding:18px}}
+
+    body{
+      margin:0;
+      background:#fbf5f3;
+      color:#493b3b;
+      font-family:'DM Sans',sans-serif
+    }
+
+    header{
+      text-align:center;
+      padding:42px 18px 32px;
+      background:linear-gradient(145deg,#f3dedb,#fff8f5)
+    }
+
+    .brand{
+      font-family:'Playfair Display',serif;
+      font-size:38px;
+      color:#865d62;
+      margin:0
+    }
+
+    header p{
+      color:#8d7374;
+      margin:9px 0 0;
+      letter-spacing:2px;
+      font-size:11px;
+      text-transform:uppercase
+    }
+
+    main{
+      max-width:680px;
+      margin:28px auto;
+      padding:0 16px 50px
+    }
+
+    .intro{
+      text-align:center;
+      margin-bottom:25px
+    }
+
+    h2{
+      font-family:'Playfair Display',serif;
+      color:#865d62;
+      font-size:27px;
+      font-weight:600
+    }
+
+    .intro p{
+      color:#907d7b;
+      font-size:14px
+    }
+
+    .panel{
+      background:white;
+      border:1px solid #f0e1de;
+      border-radius:20px;
+      padding:22px;
+      margin-bottom:18px;
+      box-shadow:0 8px 25px #9c777710
+    }
+
+    .step{
+      font-size:11px;
+      color:#b17e82;
+      letter-spacing:1.5px;
+      font-weight:700;
+      text-transform:uppercase
+    }
+
+    h3{
+      font-size:17px;
+      margin:8px 0 16px;
+      color:#654d4e
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      font-weight:600;
+      margin:13px 0 7px
+    }
+
+    select,input,textarea{
+      width:100%;
+      padding:13px;
+      border:1px solid #e8d8d6;
+      border-radius:11px;
+      background:#fffdfc;
+      color:#493b3b;
+      font:inherit;
+      font-size:14px
+    }
+
+    textarea{
+      min-height:75px;
+      resize:vertical
+    }
+
+    .price{
+      background:#fbf0ee;
+      border-radius:12px;
+      padding:15px;
+      margin-top:16px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px
+    }
+
+    .price strong{
+      color:#965e66;
+      font-size:20px
+    }
+
+    button{
+      border:0;
+      border-radius:12px;
+      padding:14px 18px;
+      background:#a66f77;
+      color:white;
+      font:inherit;
+      font-weight:700;
+      cursor:pointer;
+      width:100%;
+      margin-top:16px
+    }
+
+    button:disabled{
+      opacity:.5;
+      cursor:not-allowed
+    }
+
+    .hint{
+      font-size:12px;
+      color:#9b8583;
+      line-height:1.5
+    }
+
+    #message{
+      padding:13px;
+      border-radius:10px;
+      margin-top:14px;
+      display:none;
+      font-size:14px;
+      line-height:1.5;
+      overflow-wrap:anywhere
+    }
+
+    #message.ok{
+      display:block;
+      background:#edf7ef;
+      color:#326b43
+    }
+
+    #message.error{
+      display:block;
+      background:#fff0ee;
+      color:#9a4545
+    }
+
+    footer{
+      text-align:center;
+      padding:25px;
+      color:#9b8583;
+      font-size:12px
+    }
+
+    @media(max-width:480px){
+      .brand{font-size:33px}
+      .panel{padding:18px}
+    }
   </style>
 </head>
+
 <body>
+
   <header>
     <h1 class="brand">Ágatha</h1>
     <p>Nail Estudio · Belleza en tus manos</p>
   </header>
 
   <main>
+
     <section class="intro">
       <h2>Tu momento, tu belleza</h2>
       <p>Elegí tu servicio, diseño y horario. ¡Te esperamos!</p>
     </section>
 
+    <!-- PASO 1 -->
     <section class="panel">
+
       <div class="step">Paso 1</div>
       <h3>Elegí tu servicio</h3>
+
       <label for="service">Servicio</label>
-      <select id="service"><option value="">Conectando...</option></select>
+      <select id="service">
+        <option value="">Conectando...</option>
+      </select>
+
       <label for="design">Diseño</label>
-      <select id="design"><option value="">Conectando...</option></select>
-      <div class="price"><span>Precio estimado</span><strong id="total">$0</strong></div>
+      <select id="design">
+        <option value="">Conectando...</option>
+      </select>
+
+      <div class="price">
+        <span>Precio estimado</span>
+        <strong id="total">$0</strong>
+      </div>
+
       <p class="hint" id="duration"></p>
+
     </section>
 
+    <!-- PASO 2 -->
     <section class="panel">
+
       <div class="step">Paso 2</div>
       <h3>Elegí el día y horario</h3>
+
       <label for="date">Fecha</label>
       <input id="date" type="date">
-      <button type="button" id="checkSlots">Ver horarios disponibles</button>
+
+      <button type="button" id="checkSlots">
+        Ver horarios disponibles
+      </button>
+
       <label for="time">Horario disponible</label>
-      <select id="time" disabled><option value="">Primero elegí servicio, diseño y fecha</option></select>
-      <p class="hint">Los turnos están sujetos a disponibilidad.</p>
+
+      <select id="time" disabled>
+        <option value="">Primero elegí servicio, diseño y fecha</option>
+      </select>
+
+      <p class="hint">
+        Los turnos están sujetos a disponibilidad.
+      </p>
+
     </section>
 
+    <!-- PASO 3 -->
     <section class="panel">
+
       <div class="step">Paso 3</div>
       <h3>Tus datos</h3>
+
       <label for="customer">Nombre y apellido</label>
-      <input id="customer" type="text" placeholder="Tu nombre completo" autocomplete="name">
+      <input
+        id="customer"
+        type="text"
+        placeholder="Tu nombre completo"
+        autocomplete="name"
+        maxlength="100"
+      >
+
       <label for="phone">Teléfono</label>
-      <input id="phone" type="tel" placeholder="Tu número de teléfono" autocomplete="tel">
-      <label for="notes">¿Querés contarnos algo? (opcional)</label>
-      <textarea id="notes" placeholder="Dejanos un comentario..."></textarea>
-      <button type="button" id="book">Confirmar reserva</button>
+      <input
+        id="phone"
+        type="tel"
+        placeholder="Tu número de teléfono"
+        autocomplete="tel"
+        maxlength="30"
+      >
+
+      <label for="notes">
+        ¿Querés contarnos algo? (opcional)
+      </label>
+
+      <textarea
+        id="notes"
+        placeholder="Dejanos un comentario..."
+        maxlength="1000"
+      ></textarea>
+
+      <button type="button" id="book">
+        Confirmar reserva
+      </button>
+
       <div id="message" role="status" aria-live="polite"></div>
+
     </section>
+
   </main>
 
-  <footer><strong>Ágatha Nail Estudio</strong><br>Avenida Italia 1402</footer>
+  <footer>
+    <strong>Ágatha Nail Estudio</strong>
+    <br>
+    Avenida Italia 1402
+  </footer>
 
 <script>
-  // Credenciales públicas del proyecto. Nunca colocar aquí una clave service_role.
-  const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
+
+  // =====================================
+  // CONEXIÓN CON SUPABASE
+  // =====================================
+
+  const SUPABASE_URL =
+    "https://rtouaegbhyilabbuqwsv.supabase.co";
+
+  const SUPABASE_ANON_KEY =
+    "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
 
   let db = null;
+
   let services = [];
   let designs = [];
-  const $ = id => document.getElementById(id);
-  const money = value => "$" + Number(value || 0).toLocaleString("es-AR");
 
-  function message(text, type) {
+  const $ = id => document.getElementById(id);
+
+  const money = value =>
+    "$" + Number(value || 0).toLocaleString("es-AR");
+
+
+  // =====================================
+  // MENSAJES
+  // =====================================
+
+  function showMessage(text, type) {
     $("message").textContent = text;
     $("message").className = type;
   }
 
+  function clearMessage() {
+    $("message").textContent = "";
+    $("message").className = "";
+  }
+
+
+  // =====================================
+  // SERVICIO Y DISEÑO SELECCIONADOS
+  // =====================================
+
   function selectedService() {
-    return services.find(item => item.id === $("service").value);
+    return services.find(
+      item => item.id === $("service").value
+    );
   }
 
   function selectedDesign() {
-    return designs.find(item => item.id === $("design").value);
+    return designs.find(
+      item => item.id === $("design").value
+    );
   }
+
+
+  // =====================================
+  // LIMPIAR HORARIOS
+  // =====================================
+
+  function resetSlots() {
+    $("time").disabled = true;
+
+    $("time").innerHTML =
+      '<option value="">Volvé a consultar los horarios</option>';
+  }
+
+
+  // =====================================
+  // CALCULAR PRECIO Y DURACIÓN
+  // =====================================
 
   function updatePrice() {
+
     const service = selectedService();
     const design = selectedDesign();
-    const total = (Number(service?.price) || 0) + (Number(design?.extra_price) || 0);
-    const duration = (Number(service?.duration_minutes) || 0) + (Number(design?.duration_minutes) || 0);
+
+    const total =
+      (Number(service?.price) || 0) +
+      (Number(design?.extra_price) || 0);
+
+    const duration =
+      (Number(service?.duration_minutes) || 0) +
+      (Number(design?.duration_minutes) || 0);
+
     $("total").textContent = money(total);
-    $("duration").textContent = duration ? "Duración aproximada: " + duration + " minutos." : "";
+
+    $("duration").textContent = duration
+      ? "Duración aproximada: " + duration + " minutos."
+      : "";
+
   }
 
+
+  // =====================================
+  // PROTECCIÓN DE TEXTO HTML
+  // =====================================
+
+  function escapeHtml(value) {
+
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
+
+  }
+
+
+  // =====================================
+  // CARGAR SERVICIOS Y DISEÑOS
+  // =====================================
+
   async function loadCatalog() {
-    $("service").innerHTML = '<option value="">Cargando servicios...</option>';
-    $("design").innerHTML = '<option value="">Cargando diseños...</option>';
+
+    $("service").innerHTML =
+      '<option value="">Cargando servicios...</option>';
+
+    $("design").innerHTML =
+      '<option value="">Cargando diseños...</option>';
 
     const [serviceResult, designResult] = await Promise.all([
-      db.from("services").select("id,name,price,duration_minutes,sort_order,active").eq("active", true).order("sort_order", { ascending: true }),
-      db.from("design_options").select("id,name,extra_price,duration_minutes,active").eq("active", true).order("name", { ascending: true })
+
+      db.from("services")
+        .select("id,name,price,duration_minutes,sort_order,active")
+        .eq("active", true)
+        .order("sort_order", { ascending: true }),
+
+      db.from("design_options")
+        .select("id,name,extra_price,duration_minutes,active")
+        .eq("active", true)
+        .order("name", { ascending: true })
+
     ]);
 
-    if (serviceResult.error) throw new Error("Servicios: " + serviceResult.error.message);
-    if (designResult.error) throw new Error("Diseños: " + designResult.error.message);
+    if (serviceResult.error) {
+      throw new Error(
+        "Servicios: " + serviceResult.error.message
+      );
+    }
+
+    if (designResult.error) {
+      throw new Error(
+        "Diseños: " + designResult.error.message
+      );
+    }
 
     services = serviceResult.data || [];
     designs = designResult.data || [];
 
-    $("service").innerHTML = '<option value="">Seleccioná un servicio</option>' +
-      services.map(s => `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`).join("");
+    $("service").innerHTML =
+      '<option value="">Seleccioná un servicio</option>' +
 
-    $("design").innerHTML = '<option value="">Seleccioná un diseño</option>' +
-      designs.map(d => `<option value="${d.id}">${escapeHtml(d.name)}${Number(d.extra_price) ? " · +" + money(d.extra_price) : " · Sin adicional"}</option>`).join("");
+      services.map(s => `
+        <option value="${escapeHtml(s.id)}">
+          ${escapeHtml(s.name)} · ${money(s.price)}
+        </option>
+      `).join("");
 
-    if (!services.length) $("service").innerHTML = '<option value="">No hay servicios activos</option>';
-    if (!designs.length) $("design").innerHTML = '<option value="">No hay diseños activos</option>';
+    $("design").innerHTML =
+      '<option value="">Seleccioná un diseño</option>' +
+
+      designs.map(d => `
+        <option value="${escapeHtml(d.id)}">
+          ${escapeHtml(d.name)}
+          ${Number(d.extra_price)
+            ? " · +" + money(d.extra_price)
+            : " · Sin adicional"}
+        </option>
+      `).join("");
+
+    if (!services.length) {
+      $("service").innerHTML =
+        '<option value="">No hay servicios activos</option>';
+    }
+
+    if (!designs.length) {
+      $("design").innerHTML =
+        '<option value="">No hay diseños activos</option>';
+    }
+
     updatePrice();
+
   }
 
-  function escapeHtml(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
-      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
-    })[char]);
-  }
+
+  // =====================================
+  // CONSULTAR HORARIOS DISPONIBLES
+  // =====================================
 
   async function checkSlots() {
+
     const service = selectedService();
     const design = selectedDesign();
     const date = $("date").value;
 
     if (!service || !design || !date) {
-      message("Elegí un servicio, un diseño y una fecha.", "error");
+
+      showMessage(
+        "Elegí un servicio, un diseño y una fecha.",
+        "error"
+      );
+
+      return;
+    }
+
+    if (date < $("date").min || date > $("date").max) {
+
+      showMessage(
+        "Elegí una fecha dentro de los próximos 30 días.",
+        "error"
+      );
+
       return;
     }
 
     $("time").disabled = true;
-    $("time").innerHTML = '<option value="">Consultando horarios...</option>';
+
+    $("time").innerHTML =
+      '<option value="">Consultando horarios...</option>';
+
     $("checkSlots").disabled = true;
+    $("checkSlots").textContent = "Consultando...";
 
     try {
-      const { data, error } = await db.rpc("get_available_slots", {
-        p_service_id: service.id,
-        p_design_option_id: design.id,
-        p_appointment_date: date
-      });
+
+      const { data, error } = await db.rpc(
+        "get_available_slots",
+        {
+          p_service_id: service.id,
+          p_design_option_id: design.id,
+          p_appointment_date: date
+        }
+      );
 
       if (error) throw error;
 
       const slots = Array.isArray(data) ? data : [];
-      $("time").innerHTML = slots.length
-        ? '<option value="">Elegí un horario</option>' + slots.map(item => {
-            const value = typeof item === "string" ? item : (item.slot_time ?? item.available_time ?? item.time);
-            if (!value) return "";
-            const normalized = String(value).slice(0, 8);
-            return `<option value="${escapeHtml(normalized)}">${escapeHtml(normalized.slice(0,5))}</option>`;
-          }).filter(Boolean).join("")
+
+      const options = slots.map(item => {
+
+        const value =
+          typeof item === "string"
+            ? item
+            : (
+                item?.slot_time ??
+                item?.available_time ??
+                item?.time
+              );
+
+        if (!value) return "";
+
+        const normalized = String(value).slice(0, 8);
+
+        return `
+          <option value="${escapeHtml(normalized)}">
+            ${escapeHtml(normalized.slice(0, 5))}
+          </option>
+        `;
+
+      }).filter(Boolean);
+
+      $("time").innerHTML = options.length
+
+        ? '<option value="">Elegí un horario</option>' +
+          options.join("")
+
         : '<option value="">No hay horarios disponibles</option>';
 
-      const hasOptions = $("time").options.length > 1;
-      $("time").disabled = !hasOptions;
-      if (hasOptions) message("¡Estos son los horarios disponibles!", "ok");
-      else message("No encontramos horarios libres para esa fecha. Probá otro día.", "error");
+      $("time").disabled = options.length === 0;
+
+      if (options.length) {
+
+        showMessage(
+          "¡Estos son los horarios disponibles! 💗",
+          "ok"
+        );
+
+      } else {
+
+        showMessage(
+          "No encontramos horarios libres para esa fecha. Probá otro día.",
+          "error"
+        );
+
+      }
+
     } catch (error) {
-      console.error("Error al consultar horarios:", error);
-      $("time").innerHTML = '<option value="">No se pudieron consultar los horarios</option>';
-      message("Error al consultar horarios: " + (error.message || "revisá la función get_available_slots en Supabase."), "error");
+
+      console.error(
+        "Error al consultar horarios:",
+        error
+      );
+
+      $("time").innerHTML =
+        '<option value="">No se pudieron consultar los horarios</option>';
+
+      showMessage(
+        "Error al consultar horarios: " +
+        (error.message ||
+        "revisá la función get_available_slots en Supabase."),
+        "error"
+      );
+
     } finally {
+
       $("checkSlots").disabled = false;
+
+      $("checkSlots").textContent =
+        "Ver horarios disponibles";
+
     }
+
   }
 
+
+  // =====================================
+  // CREAR RESERVA
+  // =====================================
+
   async function createBooking() {
+
     const service = selectedService();
     const design = selectedDesign();
+
     const name = $("customer").value.trim();
     const phone = $("phone").value.trim();
+
     const date = $("date").value;
     const time = $("time").value;
 
-    if (!service || !design || !date || !time || !name || !phone) {
-      message("Completá el servicio, diseño, fecha, horario, nombre y teléfono.", "error");
+    if (
+      !service ||
+      !design ||
+      !date ||
+      !time ||
+      !name ||
+      !phone
+    ) {
+
+      showMessage(
+        "Completá el servicio, diseño, fecha, horario, nombre y teléfono.",
+        "error"
+      );
+
+      return;
+    }
+
+    if (date < $("date").min || date > $("date").max) {
+
+      showMessage(
+        "Elegí una fecha dentro de los próximos 30 días.",
+        "error"
+      );
+
       return;
     }
 
     $("book").disabled = true;
     $("book").textContent = "Confirmando...";
 
+    clearMessage();
+
     try {
-      const { error } = await db.rpc("create_studio_appointment", {
-        p_service_id: service.id,
-        p_design_option_id: design.id,
-        p_customer_name: name,
-        p_customer_phone: phone,
-        p_appointment_date: date,
-        p_appointment_time: time,
-        p_notes: $("notes").value.trim()
-      });
+
+      const { data, error } = await db.rpc(
+        "create_studio_appointment",
+        {
+          p_service_id: service.id,
+          p_design_option_id: design.id,
+          p_customer_name: name,
+          p_customer_phone: phone,
+          p_appointment_date: date,
+          p_appointment_time: time,
+          p_notes: $("notes").value.trim()
+        }
+      );
+
       if (error) throw error;
 
-      message("¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗", "ok");
+      if (!data) {
+        throw new Error(
+          "La reserva no devolvió un identificador. Consultá si se registró antes de volver a intentarlo."
+        );
+      }
+
+      showMessage(
+        "¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗",
+        "ok"
+      );
+
       $("time").disabled = true;
-      $("time").innerHTML = '<option value="">Turno reservado</option>';
+
+      $("time").innerHTML =
+        '<option value="">Turno reservado</option>';
+
+      $("book").textContent = "Reserva confirmada";
+
     } catch (error) {
-      console.error("Error al crear reserva:", error);
-      message("No se pudo confirmar la reserva: " + (error.message || "probá nuevamente."), "error");
+
+      console.error(
+        "Error al crear reserva:",
+        error
+      );
+
+      showMessage(
+        "No se pudo confirmar la reserva: " +
+        (error.message || "probá nuevamente."),
+        "error"
+      );
+
+      $("book").textContent =
+        "Confirmar reserva";
+
     } finally {
+
       $("book").disabled = false;
-      $("book").textContent = "Confirmar reserva";
+
     }
+
   }
+
+
+  // =====================================
+  // INICIAR APLICACIÓN
+  // =====================================
 
   async function init() {
+
     try {
-      if (!window.supabase?.createClient) throw new Error("No se pudo cargar la biblioteca de conexión. Revisá tu conexión a internet.");
-      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      await loadCatalog();
-      if (!services.length || !designs.length) {
-        message("La conexión funciona, pero faltan servicios o diseños activos cargados en Supabase.", "error");
-      } else {
-        message("Servicios y diseños cargados correctamente. 💗", "ok");
+
+      if (!window.supabase?.createClient) {
+
+        throw new Error(
+          "No se pudo cargar la biblioteca de conexión. Revisá tu conexión a internet."
+        );
+
       }
+
+      db = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      await loadCatalog();
+
+      if (!services.length || !designs.length) {
+
+        showMessage(
+          "La conexión funciona, pero faltan servicios o diseños activos cargados en Supabase.",
+          "error"
+        );
+
+      } else {
+
+        showMessage(
+          "Servicios y diseños cargados correctamente. 💗",
+          "ok"
+        );
+
+      }
+
     } catch (error) {
-      console.error("Error al iniciar la página:", error);
-      $("service").innerHTML = '<option value="">Error al cargar servicios</option>';
-      $("design").innerHTML = '<option value="">Error al cargar diseños</option>';
-      message("No pudimos cargar el catálogo desde Supabase: " + (error.message || "revisá la conexión y las políticas de lectura."), "error");
+
+      console.error(
+        "Error al iniciar la página:",
+        error
+      );
+
+      $("service").innerHTML =
+        '<option value="">Error al cargar servicios</option>';
+
+      $("design").innerHTML =
+        '<option value="">Error al cargar diseños</option>';
+
+      showMessage(
+        "No pudimos cargar el catálogo desde Supabase: " +
+        (error.message ||
+        "revisá la conexión y las políticas de lectura."),
+        "error"
+      );
+
     }
+
   }
 
-  $("service").addEventListener("change", updatePrice);
-  $("design").addEventListener("change", updatePrice);
-  $("checkSlots").addEventListener("click", checkSlots);
-  $("book").addEventListener("click", createBooking);
+
+  // =====================================
+  // EVENTOS
+  // =====================================
+
+  $("service").addEventListener("change", () => {
+
+    updatePrice();
+    resetSlots();
+    clearMessage();
+
+  });
+
+  $("design").addEventListener("change", () => {
+
+    updatePrice();
+    resetSlots();
+    clearMessage();
+
+  });
+
+  $("date").addEventListener("change", () => {
+
+    resetSlots();
+    clearMessage();
+
+  });
+
+  $("checkSlots").addEventListener(
+    "click",
+    checkSlots
+  );
+
+  $("book").addEventListener(
+    "click",
+    createBooking
+  );
+
+
+  // =====================================
+  // FECHAS PERMITIDAS
+  // =====================================
 
   const today = new Date();
-  const localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+
+  const localToday = new Date(
+    today.getTime() -
+    today.getTimezoneOffset() * 60000
+  ).toISOString().slice(0, 10);
+
   const maxDate = new Date(today);
-  maxDate.setDate(maxDate.getDate() + 30);
-  const localMax = new Date(maxDate.getTime() - maxDate.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+
+  maxDate.setDate(
+    maxDate.getDate() + 30
+  );
+
+  const localMax = new Date(
+    maxDate.getTime() -
+    maxDate.getTimezoneOffset() * 60000
+  ).toISOString().slice(0, 10);
+
   $("date").min = localToday;
   $("date").max = localMax;
 
+
+  // ARRANCAR
   init();
+
 </script>
+
 </body>
 </html>
