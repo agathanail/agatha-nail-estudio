@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -191,6 +192,17 @@ let designs=[];
 const $=id=>document.getElementById(id);
 const money=value=>"$"+Number(value||0).toLocaleString("es-AR");
 
+/* Convierte los minutos internos a horas y minutos para mostrarlos */
+function formatDuration(minutes){
+ const total=Math.max(0,Number(minutes)||0);
+ const hours=Math.floor(total/60);
+ const remainder=total%60;
+ const parts=[];
+ if(hours)parts.push(hours+" "+(hours===1?"hora":"horas"));
+ if(remainder)parts.push(remainder+" "+(remainder===1?"minuto":"minutos"));
+ return parts.join(" y ")||"0 minutos";
+}
+
 function message(text,type){
  $("message").textContent=text;
  $("message").className=type;
@@ -204,7 +216,7 @@ function updatePrice(){
  const total=(service?.price||0)+(design?.extra_price||0);
  const duration=(service?.duration_minutes||0)+(design?.duration_minutes||0);
  $("total").textContent=money(total);
- $("duration").textContent=duration?"Duración aproximada: "+duration+" minutos.":"";
+ $("duration").textContent=duration?"⏱ Duración estimada: "+formatDuration(duration)+".":"";
 }
 
 async function loadCatalog(){
@@ -457,7 +469,7 @@ async function loadAdminAppointments(){
    <p><strong>${adminText(a.customer_name)}</strong> · ${adminText(a.customer_phone)}</p>
    <p>📅 ${day} · 🕒 ${adminText(String(a.appointment_time).slice(0,5))}</p>
    <p>💅 ${adminText(sm[a.service_id]||"Servicio")} · 🎨 ${adminText(dm[a.design_option_id]||"Diseño")}</p>
-   <p>💰 ${money(a.total_price)} · ⏱️ ${adminText(a.duration_minutes)} min</p>
+   <p>💰 ${money(a.total_price)} · ⏱️ ${adminText(formatDuration(a.duration_minutes))}</p>
    ${a.notes?'<p>📝 '+adminText(a.notes)+'</p>':''}
    <p><strong>Estado:</strong> ${adminText(a.status)}</p>
    ${active?`
@@ -575,5 +587,3 @@ init();
 </script>
 </body>
 </html>
-
-
