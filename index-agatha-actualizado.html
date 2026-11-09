@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#fbf5f3">
   <title>Ágatha Nail Estudio</title>
   <meta name="description" content="Reservá tu turno en Ágatha Nail Estudio. Avenida Italia 1402.">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -14,7 +13,7 @@
     header{text-align:center;padding:42px 18px 32px;background:linear-gradient(145deg,#f3dedb,#fff8f5)}
     .brand{font-family:'Playfair Display',serif;font-size:38px;color:#865d62;margin:0}
     header p{color:#8d7374;margin:9px 0 0;letter-spacing:2px;font-size:11px;text-transform:uppercase}
-    main{max-width:680px;margin:28px auto;padding:0 16px 35px}
+    main{max-width:680px;margin:28px auto;padding:0 16px 50px}
     .intro{text-align:center;margin-bottom:25px}
     h2{font-family:'Playfair Display',serif;color:#865d62;font-size:27px;font-weight:600}
     .intro p{color:#907d7b;font-size:14px}
@@ -28,25 +27,12 @@
     .price strong{color:#965e66;font-size:20px}
     button{border:0;border-radius:12px;padding:14px 18px;background:#a66f77;color:white;font:inherit;font-weight:700;cursor:pointer;width:100%;margin-top:16px}
     button:disabled{opacity:.5;cursor:not-allowed}
-    button.secondary{background:#ead8d7;color:#76575b}
     .hint{font-size:12px;color:#9b8583;line-height:1.5}
-    #message,.admin-message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px}
-    #message.ok,.admin-message.ok{display:block;background:#edf7ef;color:#326b43}
-    #message.error,.admin-message.error{display:block;background:#fff0ee;color:#9a4545}
+    #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+    #message.ok{display:block;background:#edf7ef;color:#326b43}
+    #message.error{display:block;background:#fff0ee;color:#9a4545}
     footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
-    .admin-wrap{max-width:680px;margin:0 auto 25px;padding:0 16px}
-    .admin-toggle{max-width:230px;margin:0 auto 12px;display:block;background:transparent;color:#9b7479;border:1px solid #dfc5c5}
-    .admin-panel{display:none}
-    .admin-panel.visible{display:block}
-    .admin-item{border:1px solid #f0e1de;border-radius:13px;padding:14px;margin:10px 0}
-    .admin-item p{font-size:13px;line-height:1.5;margin:6px 0}
-    .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .admin-actions button{flex:1;margin-top:8px;padding:10px;min-width:100px}
-    .admin-section-title{margin-top:25px}
-    .admin-item input[type=checkbox]{width:auto}
-    [hidden]{display:none!important}
-    @media(max-width:480px){.brand{font-size:33px}.panel{padding:18px}.admin-grid{grid-template-columns:1fr}}
+    @media(max-width:480px){.brand{font-size:33px}.panel{padding:18px}}
   </style>
 </head>
 <body>
@@ -65,9 +51,9 @@
       <div class="step">Paso 1</div>
       <h3>Elegí tu servicio</h3>
       <label for="service">Servicio</label>
-      <select id="service"><option value="">Cargando servicios...</option></select>
+      <select id="service"><option value="">Conectando...</option></select>
       <label for="design">Diseño</label>
-      <select id="design"><option value="">Cargando diseños...</option></select>
+      <select id="design"><option value="">Conectando...</option></select>
       <div class="price"><span>Precio estimado</span><strong id="total">$0</strong></div>
       <p class="hint" id="duration"></p>
     </section>
@@ -79,156 +65,135 @@
       <input id="date" type="date">
       <button type="button" id="checkSlots">Ver horarios disponibles</button>
       <label for="time">Horario disponible</label>
-      <select id="time" disabled><option value="">Primero elegí una fecha</option></select>
-      <p class="hint">Los horarios se actualizan según la disponibilidad del estudio.</p>
+      <select id="time" disabled><option value="">Primero elegí servicio, diseño y fecha</option></select>
+      <p class="hint">Los turnos están sujetos a disponibilidad.</p>
     </section>
 
     <section class="panel">
       <div class="step">Paso 3</div>
       <h3>Tus datos</h3>
       <label for="customer">Nombre y apellido</label>
-      <input id="customer" type="text" maxlength="100" placeholder="Tu nombre completo" autocomplete="name">
+      <input id="customer" type="text" placeholder="Tu nombre completo" autocomplete="name">
       <label for="phone">Teléfono</label>
-      <input id="phone" type="tel" maxlength="30" placeholder="Tu número de teléfono" autocomplete="tel">
+      <input id="phone" type="tel" placeholder="Tu número de teléfono" autocomplete="tel">
       <label for="notes">¿Querés contarnos algo? (opcional)</label>
-      <textarea id="notes" maxlength="1000" placeholder="Dejanos un comentario..."></textarea>
+      <textarea id="notes" placeholder="Dejanos un comentario..."></textarea>
       <button type="button" id="book">Confirmar reserva</button>
       <div id="message" role="status" aria-live="polite"></div>
     </section>
   </main>
 
-  <section class="admin-wrap">
-    <button type="button" class="admin-toggle" id="adminToggle">Acceso administración</button>
-    <div class="panel admin-panel" id="adminPanel">
-      <div id="adminLogin">
-        <div class="step">Acceso privado</div>
-        <h3>Administración de Paula</h3>
-        <p class="hint">Ingresá con el usuario administrador creado en Supabase.</p>
-        <label for="adminEmail">Correo</label>
-        <input id="adminEmail" type="email" autocomplete="username" placeholder="Correo de administradora">
-        <label for="adminPassword">Contraseña</label>
-        <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña">
-        <button type="button" id="adminLoginButton">Ingresar al panel</button>
-      </div>
-
-      <div id="adminDashboard" hidden>
-        <div class="step">Panel privado</div>
-        <h3>Gestión del estudio</h3>
-        <button type="button" id="refreshAdmin">Actualizar información</button>
-        <button type="button" class="secondary" id="adminLogout">Cerrar sesión</button>
-
-        <h3 class="admin-section-title">Turnos</h3>
-        <p class="hint">Podés confirmar o cancelar turnos. Para reprogramar, primero verificá la nueva disponibilidad en el calendario público y coordiná con la clienta; todavía no habilitamos cambios directos de fecha para evitar superposiciones.</p>
-        <div id="adminAppointments"><p class="hint">Cargando turnos...</p></div>
-
-        <h3 class="admin-section-title">Servicios y precios</h3>
-        <div id="adminServices"><p class="hint">Cargando servicios...</p></div>
-
-        <h3 class="admin-section-title">Diseños y adicionales</h3>
-        <div id="adminDesigns"><p class="hint">Cargando diseños...</p></div>
-
-        <h3 class="admin-section-title">Horarios de atención</h3>
-        <div id="adminHours"><p class="hint">Cargando horarios...</p></div>
-      </div>
-      <div id="adminMessage" class="admin-message" role="status" aria-live="polite"></div>
-    </div>
-  </section>
-
   <footer><strong>Ágatha Nail Estudio</strong><br>Avenida Italia 1402</footer>
 
 <script>
-  // Conexión pública de Supabase. La seguridad depende de RLS y las funciones SQL.
+  // Credenciales públicas del proyecto. Nunca colocar aquí una clave service_role.
   const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
 
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let db = null;
   let services = [];
   let designs = [];
   const $ = id => document.getElementById(id);
   const money = value => "$" + Number(value || 0).toLocaleString("es-AR");
-  const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[c]));
 
-  function showMessage(text, type="error") {
+  function message(text, type) {
     $("message").textContent = text;
     $("message").className = type;
   }
-  function showAdminMessage(text, type="") {
-    $("adminMessage").textContent = text;
-    $("adminMessage").className = "admin-message" + (type ? " " + type : "");
-  }
+
   function selectedService() {
     return services.find(item => item.id === $("service").value);
   }
+
   function selectedDesign() {
     return designs.find(item => item.id === $("design").value);
   }
+
   function updatePrice() {
     const service = selectedService();
     const design = selectedDesign();
-    const total = (service?.price || 0) + (design?.extra_price || 0);
-    const duration = (service?.duration_minutes || 0) + (design?.duration_minutes || 0);
+    const total = (Number(service?.price) || 0) + (Number(design?.extra_price) || 0);
+    const duration = (Number(service?.duration_minutes) || 0) + (Number(design?.duration_minutes) || 0);
     $("total").textContent = money(total);
     $("duration").textContent = duration ? "Duración aproximada: " + duration + " minutos." : "";
-    $("time").disabled = true;
-    $("time").innerHTML = '<option value="">Volvé a consultar los horarios</option>';
   }
 
   async function loadCatalog() {
+    $("service").innerHTML = '<option value="">Cargando servicios...</option>';
+    $("design").innerHTML = '<option value="">Cargando diseños...</option>';
+
     const [serviceResult, designResult] = await Promise.all([
-      db.from("services").select("id,name,price,duration_minutes,active,sort_order").eq("active", true).order("sort_order", {ascending:true}),
-      db.from("design_options").select("id,name,extra_price,duration_minutes,active").eq("active", true).order("name")
+      db.from("services").select("id,name,price,duration_minutes,sort_order,active").eq("active", true).order("sort_order", { ascending: true }),
+      db.from("design_options").select("id,name,extra_price,duration_minutes,active").eq("active", true).order("name", { ascending: true })
     ]);
-    if (serviceResult.error) throw serviceResult.error;
-    if (designResult.error) throw designResult.error;
+
+    if (serviceResult.error) throw new Error("Servicios: " + serviceResult.error.message);
+    if (designResult.error) throw new Error("Diseños: " + designResult.error.message);
+
     services = serviceResult.data || [];
     designs = designResult.data || [];
+
     $("service").innerHTML = '<option value="">Seleccioná un servicio</option>' +
-      services.map(s => `<option value="${s.id}">${escapeHTML(s.name)} · ${money(s.price)}</option>`).join("");
+      services.map(s => `<option value="${s.id}">${escapeHtml(s.name)} · ${money(s.price)}</option>`).join("");
+
     $("design").innerHTML = '<option value="">Seleccioná un diseño</option>' +
-      designs.map(d => `<option value="${d.id}">${escapeHTML(d.name)}${d.extra_price ? " · +" + money(d.extra_price) : " · Sin adicional"}</option>`).join("");
-    if (!services.length) $("service").innerHTML = '<option value="">No hay servicios disponibles</option>';
-    if (!designs.length) $("design").innerHTML = '<option value="">No hay diseños disponibles</option>';
+      designs.map(d => `<option value="${d.id}">${escapeHtml(d.name)}${Number(d.extra_price) ? " · +" + money(d.extra_price) : " · Sin adicional"}</option>`).join("");
+
+    if (!services.length) $("service").innerHTML = '<option value="">No hay servicios activos</option>';
+    if (!designs.length) $("design").innerHTML = '<option value="">No hay diseños activos</option>';
     updatePrice();
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    })[char]);
   }
 
   async function checkSlots() {
     const service = selectedService();
     const design = selectedDesign();
     const date = $("date").value;
+
     if (!service || !design || !date) {
-      showMessage("Elegí un servicio, un diseño y una fecha.", "error");
+      message("Elegí un servicio, un diseño y una fecha.", "error");
       return;
     }
-    $("checkSlots").disabled = true;
-    $("checkSlots").textContent = "Consultando...";
+
     $("time").disabled = true;
     $("time").innerHTML = '<option value="">Consultando horarios...</option>';
-    const {data, error} = await db.rpc("get_available_slots", {
-      p_service_id: service.id,
-      p_design_option_id: design.id,
-      p_appointment_date: date
-    });
-    $("checkSlots").disabled = false;
-    $("checkSlots").textContent = "Ver horarios disponibles";
-    if (error) {
-      $("time").innerHTML = '<option value="">No se pudieron consultar</option>';
-      showMessage("No pudimos consultar los horarios. Intentá nuevamente en unos minutos.", "error");
-      console.error(error);
-      return;
+    $("checkSlots").disabled = true;
+
+    try {
+      const { data, error } = await db.rpc("get_available_slots", {
+        p_service_id: service.id,
+        p_design_option_id: design.id,
+        p_appointment_date: date
+      });
+
+      if (error) throw error;
+
+      const slots = Array.isArray(data) ? data : [];
+      $("time").innerHTML = slots.length
+        ? '<option value="">Elegí un horario</option>' + slots.map(item => {
+            const value = typeof item === "string" ? item : (item.slot_time ?? item.available_time ?? item.time);
+            if (!value) return "";
+            const normalized = String(value).slice(0, 8);
+            return `<option value="${escapeHtml(normalized)}">${escapeHtml(normalized.slice(0,5))}</option>`;
+          }).filter(Boolean).join("")
+        : '<option value="">No hay horarios disponibles</option>';
+
+      const hasOptions = $("time").options.length > 1;
+      $("time").disabled = !hasOptions;
+      if (hasOptions) message("¡Estos son los horarios disponibles!", "ok");
+      else message("No encontramos horarios libres para esa fecha. Probá otro día.", "error");
+    } catch (error) {
+      console.error("Error al consultar horarios:", error);
+      $("time").innerHTML = '<option value="">No se pudieron consultar los horarios</option>';
+      message("Error al consultar horarios: " + (error.message || "revisá la función get_available_slots en Supabase."), "error");
+    } finally {
+      $("checkSlots").disabled = false;
     }
-    const slots = data || [];
-    $("time").innerHTML = slots.length
-      ? '<option value="">Elegí un horario</option>' + slots.map(s => {
-          const value = s.slot_time || s;
-          const normalized = String(value).slice(0,5);
-          return `<option value="${normalized}">${normalized}</option>`;
-        }).join("")
-      : '<option value="">No hay horarios disponibles</option>';
-    $("time").disabled = !slots.length;
-    if (slots.length) showMessage("¡Estos son los horarios disponibles!", "ok");
-    else showMessage("No quedan horarios para esa fecha. Probá con otro día.", "error");
   }
 
   async function createBooking() {
@@ -238,244 +203,71 @@
     const phone = $("phone").value.trim();
     const date = $("date").value;
     const time = $("time").value;
+
     if (!service || !design || !date || !time || !name || !phone) {
-      showMessage("Completá servicio, diseño, fecha, horario, nombre y teléfono.", "error");
+      message("Completá el servicio, diseño, fecha, horario, nombre y teléfono.", "error");
       return;
     }
+
     $("book").disabled = true;
     $("book").textContent = "Confirmando...";
-    const {data, error} = await db.rpc("create_studio_appointment", {
-      p_service_id: service.id,
-      p_design_option_id: design.id,
-      p_customer_name: name,
-      p_customer_phone: phone,
-      p_appointment_date: date,
-      p_appointment_time: time,
-      p_notes: $("notes").value.trim()
-    });
-    $("book").disabled = false;
-    $("book").textContent = "Confirmar reserva";
-    if (error) {
-      showMessage(error.message?.includes("ocupado")
-        ? "Ese horario acaba de ocuparse. Consultá nuevamente los horarios."
-        : (error.message || "No se pudo registrar la reserva. Intentá nuevamente."), "error");
-      console.error(error);
-      return;
-    }
-    showMessage("¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗", "ok");
-    $("time").disabled = true;
-    $("time").innerHTML = '<option value="">Turno reservado</option>';
-    $("customer").value = "";
-    $("phone").value = "";
-    $("notes").value = "";
-    $("date").value = "";
-  }
 
-  function localDateString(date) {
-    const adjusted = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return adjusted.toISOString().slice(0,10);
-  }
-
-  // Administración: Supabase Auth + validación adicional en admin_profiles.
-  async function isAdmin() {
-    const {data:{user}, error:userError} = await db.auth.getUser();
-    if (userError || !user) return false;
-    const {data, error} = await db.from("admin_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
-    if (error) throw error;
-    return !!data;
-  }
-
-  async function adminLogin() {
-    const email = $("adminEmail").value.trim();
-    const password = $("adminPassword").value;
-    if (!email || !password) {
-      showAdminMessage("Ingresá correo y contraseña.");
-      return;
-    }
-    $("adminLoginButton").disabled = true;
-    const {error} = await db.auth.signInWithPassword({email,password});
-    $("adminLoginButton").disabled = false;
-    if (error) {
-      showAdminMessage("No se pudo iniciar sesión. Revisá el correo y la contraseña.");
-      return;
-    }
     try {
-      if (!(await isAdmin())) {
-        await db.auth.signOut();
-        showAdminMessage("Este usuario no tiene permisos de administración.");
-        return;
-      }
-      $("adminLogin").hidden = true;
-      $("adminDashboard").hidden = false;
-      showAdminMessage("¡Bienvenida al panel de administración!", "ok");
-      await loadAdminData();
+      const { error } = await db.rpc("create_studio_appointment", {
+        p_service_id: service.id,
+        p_design_option_id: design.id,
+        p_customer_name: name,
+        p_customer_phone: phone,
+        p_appointment_date: date,
+        p_appointment_time: time,
+        p_notes: $("notes").value.trim()
+      });
+      if (error) throw error;
+
+      message("¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗", "ok");
+      $("time").disabled = true;
+      $("time").innerHTML = '<option value="">Turno reservado</option>';
     } catch (error) {
-      showAdminMessage("No pudimos verificar los permisos de administradora.");
-      console.error(error);
+      console.error("Error al crear reserva:", error);
+      message("No se pudo confirmar la reserva: " + (error.message || "probá nuevamente."), "error");
+    } finally {
+      $("book").disabled = false;
+      $("book").textContent = "Confirmar reserva";
     }
   }
 
-  async function loadAdminData() {
-    if (!(await isAdmin())) throw new Error("Sesión sin permisos de administración.");
-    const [appointmentsResult, servicesResult, designsResult, hoursResult] = await Promise.all([
-      db.from("appointments").select("*").order("appointment_date",{ascending:true}).order("appointment_time",{ascending:true}).limit(150),
-      db.from("services").select("*").order("sort_order",{ascending:true}),
-      db.from("design_options").select("*").order("name"),
-      db.from("business_hours").select("*").order("weekday")
-    ]);
-    for (const result of [appointmentsResult,servicesResult,designsResult,hoursResult]) {
-      if (result.error) throw result.error;
+  async function init() {
+    try {
+      if (!window.supabase?.createClient) throw new Error("No se pudo cargar la biblioteca de conexión. Revisá tu conexión a internet.");
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      await loadCatalog();
+      if (!services.length || !designs.length) {
+        message("La conexión funciona, pero faltan servicios o diseños activos cargados en Supabase.", "error");
+      } else {
+        message("Servicios y diseños cargados correctamente. 💗", "ok");
+      }
+    } catch (error) {
+      console.error("Error al iniciar la página:", error);
+      $("service").innerHTML = '<option value="">Error al cargar servicios</option>';
+      $("design").innerHTML = '<option value="">Error al cargar diseños</option>';
+      message("No pudimos cargar el catálogo desde Supabase: " + (error.message || "revisá la conexión y las políticas de lectura."), "error");
     }
-
-    const statusNames = {pending:"Pendiente",confirmed:"Confirmado",cancelled:"Cancelado",completed:"Finalizado"};
-    const appointments = appointmentsResult.data || [];
-    $("adminAppointments").innerHTML = appointments.length ? appointments.map(a => `
-      <article class="admin-item">
-        <p><strong>${escapeHTML(a.customer_name)}</strong> · ${escapeHTML(a.customer_phone)}</p>
-        <p>${escapeHTML(a.appointment_date)} · ${String(a.appointment_time).slice(0,5)} · ${money(a.total_price)}</p>
-        <p>Estado: <strong>${statusNames[a.status] || escapeHTML(a.status)}</strong> · ${Number(a.duration_minutes)} min</p>
-        ${a.notes ? `<p>Nota: ${escapeHTML(a.notes)}</p>` : ""}
-        <div class="admin-actions">
-          ${a.status !== "confirmed" && a.status !== "cancelled" ? `<button type="button" data-status-id="${a.id}" data-status="confirmed">Confirmar</button>` : ""}
-          ${a.status !== "cancelled" && a.status !== "completed" ? `<button type="button" class="secondary" data-status-id="${a.id}" data-status="cancelled">Cancelar</button>` : ""}
-        </div>
-      </article>`).join("") : '<p class="hint">Todavía no hay turnos registrados.</p>';
-
-    $("adminServices").innerHTML = (servicesResult.data || []).map(s => `
-      <div class="admin-item">
-        <strong>${escapeHTML(s.name)}</strong>
-        <div class="admin-grid">
-          <div><label for="service-price-${s.id}">Precio</label><input type="number" min="0" id="service-price-${s.id}" value="${s.price}"></div>
-          <div><label for="service-duration-${s.id}">Duración (min)</label><input type="number" min="1" id="service-duration-${s.id}" value="${s.duration_minutes}"></div>
-        </div>
-        <button type="button" data-save-service="${s.id}">Guardar cambios</button>
-      </div>`).join("");
-
-    $("adminDesigns").innerHTML = (designsResult.data || []).map(d => `
-      <div class="admin-item">
-        <strong>${escapeHTML(d.name)}</strong>
-        <div class="admin-grid">
-          <div><label for="design-price-${d.id}">Adicional</label><input type="number" min="0" id="design-price-${d.id}" value="${d.extra_price}"></div>
-          <div><label for="design-duration-${d.id}">Minutos extra</label><input type="number" min="0" id="design-duration-${d.id}" value="${d.duration_minutes}"></div>
-        </div>
-        <button type="button" data-save-design="${d.id}">Guardar cambios</button>
-      </div>`).join("");
-
-    const days = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-    $("adminHours").innerHTML = (hoursResult.data || []).map(h => `
-      <div class="admin-item">
-        <strong>${days[h.weekday] || "Día"}</strong>
-        <label><input type="checkbox" id="hours-open-${h.id}" ${h.is_open ? "checked" : ""}> Día abierto</label>
-        <div class="admin-grid">
-          <div><label for="hours-start-${h.id}">Desde</label><input type="time" id="hours-start-${h.id}" value="${h.start_time ? String(h.start_time).slice(0,5) : "08:00"}"></div>
-          <div><label for="hours-end-${h.id}">Hasta</label><input type="time" id="hours-end-${h.id}" value="${h.end_time ? String(h.end_time).slice(0,5) : "21:00"}"></div>
-        </div>
-        <button type="button" data-save-hours="${h.id}">Guardar horario</button>
-      </div>`).join("");
   }
-
-  $("adminAppointments").addEventListener("click", async event => {
-    const button = event.target.closest("[data-status-id]");
-    if (!button) return;
-    button.disabled = true;
-    const {error} = await db.from("appointments").update({status:button.dataset.status}).eq("id",button.dataset.statusId);
-    if (error) {
-      showAdminMessage("No se pudo actualizar el turno.", "error");
-      console.error(error);
-      button.disabled = false;
-      return;
-    }
-    showAdminMessage("Estado del turno actualizado.", "ok");
-    await loadAdminData();
-  });
-
-  $("adminServices").addEventListener("click", async event => {
-    const button = event.target.closest("[data-save-service]");
-    if (!button) return;
-    const id = button.dataset.saveService;
-    const price = Number($("service-price-"+id).value);
-    const duration_minutes = Number($("service-duration-"+id).value);
-    if (!Number.isInteger(price) || price < 0 || !Number.isInteger(duration_minutes) || duration_minutes < 1) {
-      showAdminMessage("Revisá el precio y la duración.", "error"); return;
-    }
-    const {error} = await db.from("services").update({price,duration_minutes}).eq("id",id);
-    if (error) { showAdminMessage("No se pudo guardar el servicio.", "error"); console.error(error); return; }
-    await loadCatalog();
-    await loadAdminData();
-    showAdminMessage("Servicio actualizado.", "ok");
-  });
-
-  $("adminDesigns").addEventListener("click", async event => {
-    const button = event.target.closest("[data-save-design]");
-    if (!button) return;
-    const id = button.dataset.saveDesign;
-    const extra_price = Number($("design-price-"+id).value);
-    const duration_minutes = Number($("design-duration-"+id).value);
-    if (!Number.isInteger(extra_price) || extra_price < 0 || !Number.isInteger(duration_minutes) || duration_minutes < 0) {
-      showAdminMessage("Revisá el adicional y los minutos extra.", "error"); return;
-    }
-    const {error} = await db.from("design_options").update({extra_price,duration_minutes}).eq("id",id);
-    if (error) { showAdminMessage("No se pudo guardar el diseño.", "error"); console.error(error); return; }
-    await loadCatalog();
-    await loadAdminData();
-    showAdminMessage("Diseño actualizado.", "ok");
-  });
-
-  $("adminHours").addEventListener("click", async event => {
-    const button = event.target.closest("[data-save-hours]");
-    if (!button) return;
-    const id = button.dataset.saveHours;
-    const is_open = $("hours-open-"+id).checked;
-    const start_time = $("hours-start-"+id).value || null;
-    const end_time = $("hours-end-"+id).value || null;
-    if (is_open && (!start_time || !end_time || start_time >= end_time)) {
-      showAdminMessage("Revisá la hora de apertura y cierre.", "error"); return;
-    }
-    const {error} = await db.from("business_hours").update({is_open,start_time,end_time}).eq("id",id);
-    if (error) { showAdminMessage("No se pudo guardar el horario.", "error"); console.error(error); return; }
-    showAdminMessage("Horario actualizado.", "ok");
-  });
-
-  $("adminToggle").addEventListener("click", () => $("adminPanel").classList.toggle("visible"));
-  $("adminLoginButton").addEventListener("click", adminLogin);
-  $("adminPassword").addEventListener("keydown", event => { if (event.key === "Enter") adminLogin(); });
-  $("refreshAdmin").addEventListener("click", async () => {
-    try { await loadAdminData(); showAdminMessage("Información actualizada.", "ok"); }
-    catch(error) { showAdminMessage("No se pudieron cargar los datos.", "error"); console.error(error); }
-  });
-  $("adminLogout").addEventListener("click", async () => {
-    await db.auth.signOut();
-    $("adminDashboard").hidden = true;
-    $("adminLogin").hidden = false;
-    $("adminPassword").value = "";
-    showAdminMessage("Sesión cerrada.", "ok");
-  });
 
   $("service").addEventListener("change", updatePrice);
   $("design").addEventListener("change", updatePrice);
   $("checkSlots").addEventListener("click", checkSlots);
   $("book").addEventListener("click", createBooking);
-  $("date").addEventListener("change", () => {
-    $("time").disabled = true;
-    $("time").innerHTML = '<option value="">Volvé a consultar los horarios</option>';
-  });
 
   const today = new Date();
+  const localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0,10);
   const maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + 30);
-  $("date").min = localDateString(today);
-  $("date").max = localDateString(maxDate);
+  const localMax = new Date(maxDate.getTime() - maxDate.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+  $("date").min = localToday;
+  $("date").max = localMax;
 
-  (async function init() {
-    try {
-      await loadCatalog();
-    } catch (error) {
-      console.error("Error cargando catálogo:", error);
-      showMessage("No pudimos cargar los servicios. Revisá la conexión y los permisos públicos de Supabase.", "error");
-      $("service").innerHTML = '<option value="">No se pudieron cargar los servicios</option>';
-      $("design").innerHTML = '<option value="">No se pudieron cargar los diseños</option>';
-    }
-  })();
+  init();
 </script>
 </body>
 </html>
