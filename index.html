@@ -69,11 +69,12 @@
       <h3>Elegí el día y horario</h3>
       <label for="date">Fecha</label>
       <input id="date" type="date">
-      <button type="button" id="checkSlots">Ver horarios disponibles</button>
-      <label for="time">Horario disponible</label>
-      <select id="time" disabled>
-        <option value="">Primero elegí una fecha</option>
-      </select>
+
+      <button type="button" id="checkSlots">Comprobar horario</button>
+
+      <label for="time">Elegí el horario</label>
+      <input id="time" type="time">
+      <p class="hint" id="timeInfo">Primero elegí el servicio, el diseño y la fecha.</p>
       <p class="hint">Los turnos están sujetos a disponibilidad.</p>
     </section>
 
@@ -97,9 +98,10 @@
   </footer>
 
 <script>
-  // CONFIGURACIÓN: completar con los datos públicos de tu proyecto Supabase.
+  // CONFIGURACIÓN DE SUPABASE
   const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
+  const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
+
   let db = null;
   let services = [];
   let designs = [];
@@ -123,10 +125,16 @@ const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
   function updatePrice() {
     const service = selectedService();
     const design = selectedDesign();
+
     const total = (service?.price || 0) + (design?.extra_price || 0);
-    const duration = (service?.duration_minutes || 0) + (design?.duration_minutes || 0);
+    const duration =
+      (service?.duration_minutes || 0) +
+      (design?.duration_minutes || 0);
+
     $("total").textContent = money(total);
-    $("duration").textContent = duration ? "Duración aproximada: " + duration + " minutos." : "";
+    $("duration").textContent = duration
+      ? "Duración aproximada: " + duration + " minutos."
+      : "";
   }
 
   async function loadCatalog() {
@@ -141,52 +149,74 @@ const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
     services = serviceResult.data || [];
     designs = designResult.data || [];
 
-    $("service").innerHTML = '<option value="">Seleccioná un servicio</option>' +
-      services.map(s => `<option value="${s.id}">${s.name} · ${money(s.price)}</option>`).join("");
+    $("service").innerHTML =
+      '<option value="">Seleccioná un servicio</option>' +
+      services.map(s =>
+        `<option value="${s.id}">${s.name} · ${money(s.price)}</option>`
+      ).join("");
 
-    $("design").innerHTML = '<option value="">Seleccioná un diseño</option>' +
-      designs.map(d => `<option value="${d.id}">${d.name}${d.extra_price ? " · +" + money(d.extra_price) : " · Sin adicional"}</option>`).join("");
+    $("design").innerHTML =
+      '<option value="">Seleccioná un diseño</option>' +
+      designs.map(d =>
+        `<option value="${d.id}">${d.name}${d.extra_price ? " · +" + money(d.extra_price) : " · Sin adicional"}</option>`
+      ).join("");
 
     updatePrice();
   }
 
+  // COMPROBAR SI EL HORARIO ELEGIDO ESTÁ DISPONIBLE
   async function checkSlots() {
     const service = selectedService();
     const design = selectedDesign();
     const date = $("date").value;
+    const time = $("time").value;
 
-    if (!service || !design || !date) {
-      message("Elegí un servicio, un diseño y una fecha.", "error");
+    if (!service || !design || !date || !time) {
+      message("Elegí un servicio, un diseño, una fecha y un horario.", "error");
       return;
     }
 
     $("time").disabled = true;
-    $("time").innerHTML = '<option value="">Consultando horarios...</option>';
+    $("timeInfo").textContent = "Comprobando disponibilidad...";
 
-    const { data, error } = await db.rpc("get_available_slots", {
+    const { data, error } = await db.rpc("check_studio_time", {
       p_service_id: service.id,
       p_design_option_id: design.id,
-      p_appointment_date: date
+      p_appointment_date: date,
+      p_appointment_time: time
     });
 
+    $("time").disabled = false;
+
     if (error) {
-      $("time").innerHTML = '<option value="">No se pudieron consultar</option>';
-      message("Todavía estamos configurando la disponibilidad de turnos. Volvé a intentar más tarde.", "error");
+      $("timeInfo").textContent = "No se pudo comprobar el horario.";
+      message("No pudimos comprobar la disponibilidad. Intentá nuevamente.", "error");
+      console.error(error);
       return;
     }
 
-    const slots = data || [];
-    $("time").innerHTML = slots.length
-      ? '<option value="">Elegí un horario</option>' + slots.map(s => {
-          const value = s.slot_time || s;
-          return `<option value="${value}">${String(value).slice(0,5)}</option>`;
-        }).join("")
-      : '<option value="">No hay horarios disponibles</option>';
+    if (!data) {
+      $("timeInfo").textContent = "Ese horario no está disponible.";
+      message("Ese horario no está disponible. Probá con otra hora.", "error");
+      return;
+    }
 
-    $("time").disabled = !slots.length;
-    if (slots.length) message("¡Estos son los horarios disponibles!", "ok");
+    const duration =
+      (service.duration_minutes || 0) +
+      (design.duration_minutes || 0);
+
+    const [hours, minutes] = time.split(":").map(Number);
+    const finish = new Date(2000, 0, 1, hours, minutes + duration);
+    const finishTime = finish.toTimeString().slice(0, 5);
+
+    $("timeInfo").textContent =
+      "¡Horario disponible! Tu turno terminaría aproximadamente a las " +
+      finishTime + ".";
+
+    message("¡Ese horario está disponible! 💗", "ok");
   }
 
+  // REGISTRAR LA RESERVA
   async function createBooking() {
     const service = selectedService();
     const design = selectedDesign();
@@ -217,73 +247,105 @@ const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
     $("book").textContent = "Confirmar reserva";
 
     if (error) {
-      message("Ese horario puede haberse ocupado. Consultá nuevamente los horarios disponibles.", "error");
+      console.error("Error al reservar:", error);
+      message(
+        "Ese horario puede haberse ocupado o no estar disponible. Comprobá nuevamente otro horario.",
+        "error"
+      );
       return;
     }
 
-    message("¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗", "ok");
-    $("time").disabled = true;
-    $("time").innerHTML = '<option value="">Turno reservado</option>';
-  }
-
-async function init() {
-  try {
-    $("service").innerHTML =
-      '<option value="">Conectando con Supabase...</option>';
-
-    $("design").innerHTML =
-      '<option value="">Conectando con Supabase...</option>';
-
-    if (!window.supabase || !window.supabase.createClient) {
-      throw new Error("No se pudo cargar la biblioteca de Supabase.");
-    }
-
-    if (
-      !SUPABASE_URL.startsWith("https://") ||
-      !SUPABASE_ANON_KEY.startsWith("sb_publishable_")
-    ) {
-      throw new Error("La configuración de Supabase es incorrecta.");
-    }
-
-    db = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
+    message(
+      "¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗",
+      "ok"
     );
 
-    await loadCatalog();
-
-    message("¡Servicios y diseños cargados correctamente! 💗", "ok");
-
-  } catch (error) {
-    console.error("ERROR REAL DE INICIO:", error);
-
-    $("service").innerHTML =
-      '<option value="">Error al cargar servicios</option>';
-
-    $("design").innerHTML =
-      '<option value="">Error al cargar diseños</option>';
-
-    const detalle = [
-      error.message,
-      error.details,
-      error.hint,
-      error.code
-    ].filter(Boolean).join(" | ");
-
-    message("Error de conexión: " + detalle, "error");
+    $("time").disabled = true;
+    $("timeInfo").textContent = "¡Turno reservado! 💗";
   }
-}
 
-  $("service").addEventListener("change", updatePrice);
-  $("design").addEventListener("change", updatePrice);
+  async function init() {
+    try {
+      $("service").innerHTML =
+        '<option value="">Conectando con Supabase...</option>';
+
+      $("design").innerHTML =
+        '<option value="">Conectando con Supabase...</option>';
+
+      if (!window.supabase || !window.supabase.createClient) {
+        throw new Error("No se pudo cargar la biblioteca de Supabase.");
+      }
+
+      if (
+        !SUPABASE_URL.startsWith("https://") ||
+        !SUPABASE_ANON_KEY.startsWith("sb_publishable_")
+      ) {
+        throw new Error("La configuración de Supabase es incorrecta.");
+      }
+
+      db = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      await loadCatalog();
+
+      message("¡Servicios y diseños cargados correctamente! 💗", "ok");
+
+    } catch (error) {
+      console.error("ERROR REAL DE INICIO:", error);
+
+      $("service").innerHTML =
+        '<option value="">Error al cargar servicios</option>';
+
+      $("design").innerHTML =
+        '<option value="">Error al cargar diseños</option>';
+
+      const detalle = [
+        error.message,
+        error.details,
+        error.hint,
+        error.code
+      ].filter(Boolean).join(" | ");
+
+      message("Error de conexión: " + detalle, "error");
+    }
+  }
+
+  $("service").addEventListener("change", () => {
+    updatePrice();
+    $("timeInfo").textContent = "Volvé a comprobar el horario con el servicio elegido.";
+  });
+
+  $("design").addEventListener("change", () => {
+    updatePrice();
+    $("timeInfo").textContent = "Volvé a comprobar el horario con el diseño elegido.";
+  });
+
+  $("date").addEventListener("change", () => {
+    $("timeInfo").textContent = "Elegí una hora y comprobá su disponibilidad.";
+  });
+
+  $("time").addEventListener("change", () => {
+    $("timeInfo").textContent = "Recordá comprobar la disponibilidad de esta hora.";
+  });
+
   $("checkSlots").addEventListener("click", checkSlots);
   $("book").addEventListener("click", createBooking);
 
+  // FECHAS DISPONIBLES: HOY HASTA 30 DÍAS
   const today = new Date();
-  const localToday = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+  const localToday = new Date(
+    today.getTime() - today.getTimezoneOffset() * 60000
+  ).toISOString().slice(0, 10);
+
   const maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + 30);
-  const localMax = new Date(maxDate.getTime() - maxDate.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+
+  const localMax = new Date(
+    maxDate.getTime() - maxDate.getTimezoneOffset() * 60000
+  ).toISOString().slice(0, 10);
+
   $("date").min = localToday;
   $("date").max = localMax;
 
@@ -291,3 +353,4 @@ async function init() {
 </script>
 </body>
 </html>
+
