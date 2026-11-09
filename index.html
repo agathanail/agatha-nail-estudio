@@ -67,6 +67,25 @@ header{position:relative;padding-right:58px}
 .admin-hours-row input[type="time"]{min-width:0}
 .admin-hours-row label{margin:0}
 
+/* Galería pública y administración */
+.gallery-section{display:none;margin:0 auto 34px;max-width:620px;padding:0 2px}
+.gallery-kicker{text-align:center;color:#b17e82;font-size:9px;font-weight:700;letter-spacing:2.8px;text-transform:uppercase;margin:0 0 8px}
+.gallery-heading{text-align:center;font-family:'Playfair Display',serif;font-size:27px;font-weight:500;color:#865d62;margin:0 0 7px}
+.gallery-subtitle{text-align:center;color:#9b8583;font-size:12px;letter-spacing:.25px;margin:0 0 17px}
+.gallery-ornament{width:35px;height:1px;background:#d8b2b0;margin:0 auto 15px}
+.gallery-track{display:flex;gap:15px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x mandatory;padding:3px 2px 13px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.gallery-track::-webkit-scrollbar{display:none}
+.gallery-card{position:relative;flex:0 0 78%;max-width:310px;aspect-ratio:4/5;border-radius:23px;overflow:hidden;scroll-snap-align:center;background:linear-gradient(145deg,#f3e4e1,#ead5d2);box-shadow:0 12px 28px #8d64641b;border:1px solid #fff9}
+.gallery-card:after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,#38252755);pointer-events:none}
+.gallery-card img{width:100%;height:100%;display:block;object-fit:cover}
+.gallery-caption{position:absolute;z-index:1;left:16px;right:16px;bottom:15px;color:#fff;font-family:'Playfair Display',serif;font-size:16px;text-shadow:0 1px 8px #3b242455}
+.gallery-admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:13px;margin-top:18px}
+.gallery-admin-item{min-width:0;padding:7px;border:1px solid #f0e1de;border-radius:16px;background:#fff;box-shadow:0 4px 14px #9c77770b}
+.gallery-admin-item img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;border-radius:11px}
+.gallery-admin-item button{width:100%;margin:8px 0 0;padding:8px 9px;font-size:11px;min-height:36px}
+.gallery-upload{display:block;width:100%;padding:13px;border:1px dashed #d9b9b8;border-radius:13px;background:#fffaf8;color:#765f60}
+.gallery-admin-note{padding:12px 14px;border-radius:12px;background:#fbf1ef;color:#96777a;font-size:12px;line-height:1.5}
+
 @media(max-width:560px){
  .brand{font-size:33px}
  .panel{padding:18px}
@@ -94,6 +113,14 @@ header{position:relative;padding-right:58px}
 </header>
 
 <main>
+<section id="publicGallery" class="gallery-section" aria-label="Trabajos realizados">
+ <p class="gallery-kicker">Ágatha Nail Estudio</p>
+ <h2 class="gallery-heading">Detalles que enamoran</h2>
+ <div class="gallery-ornament"></div>
+ <p class="gallery-subtitle">Inspirate con algunos de nuestros trabajos</p>
+ <div id="galleryTrack" class="gallery-track"></div>
+</section>
+
 <section class="intro">
 <h2>Tu momento, tu belleza</h2>
 <p>Elegí tu servicio, diseño y horario. ¡Te esperamos!</p>
@@ -178,6 +205,18 @@ Avenida Italia 1402<br>
 <button type="button" id="saveAdminHours">Guardar horarios</button>
 <div id="adminHoursMessage" class="hint"></div>
 </div>
+
+<div class="panel">
+ <div class="step">Galería de trabajos</div>
+ <h3>Fotos de Ágatha</h3>
+ <p class="admin-small">Compartí los diseños y trabajos del estudio. Las fotografías que publiques aparecerán automáticamente en la página principal.</p>
+ <label for="galleryFiles">Elegir fotografías</label>
+ <input id="galleryFiles" class="gallery-upload" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+ <div class="gallery-admin-note">Podés seleccionar varias imágenes desde tu celular. Formatos JPG, PNG o WebP · Hasta 5 MB por foto.</div>
+ <button type="button" id="uploadGalleryButton">Publicar fotografías</button>
+ <div id="galleryAdminMessage" class="admin-small" role="status"></div>
+ <div id="galleryAdminList" class="gallery-admin-grid"></div>
+</div>
 </section>
 
 <script>
@@ -188,6 +227,8 @@ const WHATSAPP_NUMBER="5493704564674";
 let db=null;
 let services=[];
 let designs=[];
+let galleryTimer=null;
+const GALLERY_BUCKET="nail-gallery";
 
 const $=id=>document.getElementById(id);
 const money=value=>"$"+Number(value||0).toLocaleString("es-AR");
@@ -347,19 +388,198 @@ async function createBooking(){
  await loadOccupiedTimes();
 }
 
+/* GALERÍA DE FOTOGRAFÍAS */
+function galleryImageUrl(path){
+ return db.storage.from(GALLERY_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+async function listGalleryPhotos(){
+ const {data,error}=await db.storage.from(GALLERY_BUCKET).list("",{
+  limit:100,
+  sortBy:{column:"created_at",order:"asc"}
+ });
+ if(error)throw error;
+ return (data||[]).filter(file=>file.name&&!file.name.startsWith(".")).map(file=>({
+  name:file.name,
+  path:file.name,
+  url:galleryImageUrl(file.name)
+ }));
+}
+
+async function loadPublicGallery(){
+ const section=$("publicGallery");
+ const track=$("galleryTrack");
+
+ try{
+  const photos=await listGalleryPhotos();
+
+  if(!photos.length){
+   section.style.display="none";
+   if(galleryTimer){
+    clearInterval(galleryTimer);
+    galleryTimer=null;
+   }
+   return;
+  }
+
+  track.innerHTML=photos.map((photo,index)=>`
+   <article class="gallery-card">
+    <img src="${adminText(photo.url)}" alt="Trabajo de uñas de Ágatha ${index+1}" loading="lazy">
+    <div class="gallery-caption">Belleza en cada detalle</div>
+   </article>
+  `).join("");
+
+  section.style.display="block";
+
+  if(galleryTimer)clearInterval(galleryTimer);
+
+  if(photos.length>1){
+   galleryTimer=setInterval(()=>{
+    const next=track.scrollLeft+track.clientWidth>=track.scrollWidth-10
+     ?0
+     :track.scrollLeft+Math.min(280,track.clientWidth*.78);
+
+    track.scrollTo({left:next,behavior:"smooth"});
+   },3800);
+  }
+
+ }catch(error){
+  console.error("No se pudo cargar la galería:",error);
+  section.style.display="none";
+ }
+}
+
+async function loadAdminGallery(){
+ const list=$("galleryAdminList");
+ list.innerHTML='<p class="admin-small">Cargando fotografías...</p>';
+
+ try{
+  const photos=await listGalleryPhotos();
+
+  if(!photos.length){
+   list.innerHTML='<p class="admin-small">Todavía no hay fotografías publicadas. Cuando subas la primera, aparecerá aquí.</p>';
+   return;
+  }
+
+  list.innerHTML=photos.map((photo,index)=>`
+   <div class="gallery-admin-item">
+    <img src="${adminText(photo.url)}" alt="Fotografía ${index+1}" loading="lazy">
+    <button type="button" class="admin-danger" data-delete-gallery="${adminText(photo.name)}">Eliminar</button>
+   </div>
+  `).join("");
+
+  list.querySelectorAll("[data-delete-gallery]").forEach(button=>{
+   button.addEventListener("click",()=>deleteGalleryPhoto(button.dataset.deleteGallery));
+  });
+
+ }catch(error){
+  list.innerHTML='<p class="admin-small">No se pudieron cargar las fotos: '+adminText(error.message)+'</p>';
+ }
+}
+
+async function uploadGalleryPhotos(){
+ const input=$("galleryFiles");
+ const files=Array.from(input.files||[]);
+ const messageBox=$("galleryAdminMessage");
+
+ if(!files.length){
+  messageBox.textContent="Primero elegí una o más fotografías.";
+  return;
+ }
+
+ const allowed=["image/jpeg","image/png","image/webp"];
+
+ for(const file of files){
+  if(!allowed.includes(file.type)||file.size>5*1024*1024){
+   messageBox.textContent="Solo se permiten JPG, PNG o WebP de hasta 5 MB por foto.";
+   return;
+  }
+ }
+
+ const button=$("uploadGalleryButton");
+ button.disabled=true;
+ messageBox.textContent="Publicando fotografías...";
+
+ try{
+  for(const file of files){
+   const extension=file.name.split(".").pop().toLowerCase();
+   const path=(window.crypto?.randomUUID?.()||String(Date.now())+"-"+Math.random().toString(36).slice(2))+"."+extension;
+
+   const {error}=await db.storage.from(GALLERY_BUCKET).upload(
+    path,
+    file,
+    {
+     cacheControl:"3600",
+     upsert:false,
+     contentType:file.type
+    }
+   );
+
+   if(error)throw error;
+  }
+
+  input.value="";
+  messageBox.textContent="¡Tus fotografías ya están publicadas! 💗";
+
+  await Promise.all([
+   loadAdminGallery(),
+   loadPublicGallery()
+  ]);
+
+ }catch(error){
+  messageBox.textContent="No se pudieron publicar todas las fotos: "+error.message;
+ }finally{
+  button.disabled=false;
+ }
+}
+
+async function deleteGalleryPhoto(path){
+ if(!confirm("¿Querés retirar esta fotografía de la galería?"))return;
+
+ $("galleryAdminMessage").textContent="Eliminando fotografía...";
+
+ const {error}=await db.storage.from(GALLERY_BUCKET).remove([path]);
+
+ if(error){
+  $("galleryAdminMessage").textContent="No se pudo eliminar: "+error.message;
+  return;
+ }
+
+ $("galleryAdminMessage").textContent="Fotografía eliminada. 💗";
+
+ await Promise.all([
+  loadAdminGallery(),
+  loadPublicGallery()
+ ]);
+}
+
+/* INICIO */
 async function init(){
  try{
   $("service").innerHTML='<option value="">Conectando con Supabase...</option>';
   $("design").innerHTML='<option value="">Conectando con Supabase...</option>';
-  if(!window.supabase||!window.supabase.createClient)throw new Error("No se pudo cargar la biblioteca de Supabase.");
-  if(!SUPABASE_URL.startsWith("https://")||!SUPABASE_ANON_KEY.startsWith("sb_publishable_"))throw new Error("La configuración de Supabase es incorrecta.");
+
+  if(!window.supabase||!window.supabase.createClient){
+   throw new Error("No se pudo cargar la biblioteca de Supabase.");
+  }
+
+  if(!SUPABASE_URL.startsWith("https://")||!SUPABASE_ANON_KEY.startsWith("sb_publishable_")){
+   throw new Error("La configuración de Supabase es incorrecta.");
+  }
+
   db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
   await loadCatalog();
+  await loadPublicGallery();
+
   message("¡Servicios y diseños cargados correctamente! 💗","ok");
+
  }catch(error){
   console.error("ERROR REAL DE INICIO:",error);
+
   $("service").innerHTML='<option value="">Error al cargar servicios</option>';
   $("design").innerHTML='<option value="">Error al cargar diseños</option>';
+
   const detalle=[error.message,error.details,error.hint,error.code].filter(Boolean).join(" | ");
   message("Error de conexión: "+detalle,"error");
  }
@@ -369,26 +589,33 @@ $("service").addEventListener("change",()=>{
  updatePrice();
  $("timeInfo").textContent="Volvé a comprobar el horario con el servicio elegido.";
 });
+
 $("design").addEventListener("change",()=>{
  updatePrice();
  $("timeInfo").textContent="Volvé a comprobar el horario con el diseño elegido.";
 });
+
 $("date").addEventListener("change",()=>{
  $("timeInfo").textContent="Elegí una hora y comprobá su disponibilidad.";
  loadOccupiedTimes();
 });
+
 $("time").addEventListener("change",()=>{
  $("timeInfo").textContent="Recordá comprobar la disponibilidad de esta hora.";
 });
+
 $("checkSlots").addEventListener("click",checkSlots);
 $("book").addEventListener("click",createBooking);
 
 // Fechas disponibles: hoy hasta 30 días
 const today=new Date();
 const localToday=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+
 const maxDate=new Date(today);
 maxDate.setDate(maxDate.getDate()+30);
+
 const localMax=new Date(maxDate.getTime()-maxDate.getTimezoneOffset()*60000).toISOString().slice(0,10);
+
 $("date").min=localToday;
 $("date").max=localMax;
 
@@ -398,11 +625,13 @@ const weekdayNames=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","
 function adminText(v){
  return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 }
+
 function openAdminLogin(){
  $("adminLogin").style.display="block";
  $("adminDashboard").style.display="none";
  $("adminLogin").scrollIntoView({behavior:"smooth"});
 }
+
 function hideAdminSections(){
  $("adminLogin").style.display="none";
  $("adminDashboard").style.display="none";
@@ -410,6 +639,7 @@ function hideAdminSections(){
 
 async function verifyAdmin(){
  const {data,error}=await db.rpc("is_studio_admin");
+
  if(error||data!==true){
   await db.auth.signOut();
   throw new Error("Esta cuenta no tiene permisos de administración.");
@@ -419,16 +649,22 @@ async function verifyAdmin(){
 async function adminSignIn(){
  $("adminLoginButton").disabled=true;
  $("adminLoginMessage").textContent="Verificando acceso...";
+
  try{
   const {error}=await db.auth.signInWithPassword({
    email:$("adminEmail").value.trim(),
    password:$("adminPassword").value
   });
+
   if(error)throw error;
+
   await verifyAdmin();
+
   $("adminPassword").value="";
   $("adminLoginMessage").textContent="";
+
   await showAdminDashboard();
+
  }catch(e){
   $("adminLoginMessage").textContent=e.message||"No se pudo iniciar sesión.";
  }finally{
@@ -438,33 +674,46 @@ async function adminSignIn(){
 
 async function showAdminDashboard(){
  const {data:{user}}=await db.auth.getUser();
+
  $("adminWelcome").textContent="Sesión iniciada: "+(user?.email||"administrador");
  $("adminLogin").style.display="none";
  $("adminDashboard").style.display="block";
- await Promise.all([loadAdminAppointments(),loadAdminHours()]);
+
+ await Promise.all([
+  loadAdminAppointments(),
+  loadAdminHours(),
+  loadAdminGallery()
+ ]);
+
  $("adminDashboard").scrollIntoView({behavior:"smooth"});
 }
 
 async function loadAdminAppointments(){
  $("adminAppointments").innerHTML='<p class="hint">Cargando reservas...</p>';
+
  const [ar,sr,dr]=await Promise.all([
   db.from("appointments").select("*").order("appointment_date",{ascending:false}).order("appointment_time",{ascending:false}).limit(150),
   db.from("services").select("id,name"),
   db.from("design_options").select("id,name")
  ]);
+
  if(ar.error){
   $("adminAppointments").textContent="Error al cargar reservas: "+ar.error.message;
   return;
  }
+
  const sm=Object.fromEntries((sr.data||[]).map(x=>[x.id,x.name]));
  const dm=Object.fromEntries((dr.data||[]).map(x=>[x.id,x.name]));
+
  if(!ar.data?.length){
   $("adminAppointments").innerHTML='<p class="hint">Todavía no hay reservas.</p>';
   return;
  }
+
  $("adminAppointments").innerHTML=ar.data.map(a=>{
   const day=new Date(a.appointment_date+"T00:00:00").toLocaleDateString("es-AR");
   const active=["confirmed","pending"].includes(a.status);
+
   return `<article class="admin-row">
    <p><strong>${adminText(a.customer_name)}</strong> · ${adminText(a.customer_phone)}</p>
    <p>📅 ${day} · 🕒 ${adminText(String(a.appointment_time).slice(0,5))}</p>
@@ -486,15 +735,19 @@ async function loadAdminAppointments(){
 
 async function adminCancel(id){
  if(!confirm("¿Cancelar este turno? Quedará guardado en el historial."))return;
+
  const {data,error}=await db.rpc("admin_cancel_appointment",{p_appointment_id:id});
+
  if(error){
   alert("No se pudo cancelar: "+error.message);
   return;
  }
+
  if(!data){
   alert("El turno no está activo.");
   return;
  }
+
  await loadAdminAppointments();
  alert("Turno cancelado. Se conservó en el historial.");
 }
@@ -502,34 +755,42 @@ async function adminCancel(id){
 async function adminReschedule(id){
  const date=$("rd-"+id)?.value;
  const time=$("rt-"+id)?.value;
+
  if(!date||!time){
   alert("Elegí fecha y hora.");
   return;
  }
+
  if(!confirm("¿Confirmás reprogramar este turno?"))return;
+
  const {data,error}=await db.rpc("admin_reschedule_appointment",{
   p_appointment_id:id,
   p_new_date:date,
   p_new_time:time
  });
+
  if(error){
   alert("No se pudo reprogramar: "+error.message);
   return;
  }
+
  if(!data){
   alert("No se pudo reprogramar.");
   return;
  }
+
  await loadAdminAppointments();
  alert("¡Turno reprogramado correctamente!");
 }
 
 async function loadAdminHours(){
  const {data,error}=await db.from("business_hours").select("*").order("weekday");
+
  if(error){
   $("adminHours").textContent="Error: "+error.message;
   return;
  }
+
  $("adminHours").innerHTML=(data||[]).map(h=>`
   <div class="admin-hours-row" data-hours-id="${h.id}">
    <strong>${weekdayNames[h.weekday]||"Día"}</strong>
@@ -543,22 +804,28 @@ async function loadAdminHours(){
 async function saveAdminHours(){
  $("saveAdminHours").disabled=true;
  $("adminHoursMessage").textContent="Guardando...";
+
  try{
   for(const r of $("adminHours").querySelectorAll("[data-hours-id]")){
    const open=r.querySelector(".hopen").checked;
    const start=r.querySelector(".hstart").value;
    const end=r.querySelector(".hend").value;
+
    if(open&&(!start||!end||start>=end)){
     throw new Error("La apertura debe ser anterior al cierre.");
    }
+
    const {error}=await db.from("business_hours").update({
     is_open:open,
     start_time:open?start:null,
     end_time:open?end:null
    }).eq("id",r.dataset.hoursId);
+
    if(error)throw error;
   }
+
   $("adminHoursMessage").textContent="¡Horarios guardados correctamente! 💗";
+
  }catch(e){
   $("adminHoursMessage").textContent="Error: "+e.message;
  }finally{
@@ -567,16 +834,22 @@ async function saveAdminHours(){
 }
 
 $("adminLoginButton").addEventListener("click",adminSignIn);
+
 $("adminPassword").addEventListener("keydown",e=>{
  if(e.key==="Enter")adminSignIn();
 });
+
 $("adminCloseLogin").addEventListener("click",hideAdminSections);
 $("refreshAdmin").addEventListener("click",loadAdminAppointments);
+
 $("adminLogout").addEventListener("click",async()=>{
  await db.auth.signOut();
  hideAdminSections();
 });
+
 $("saveAdminHours").addEventListener("click",saveAdminHours);
+$("uploadGalleryButton").addEventListener("click",uploadGalleryPhotos);
+
 $("adminAccess").addEventListener("click",e=>{
  e.preventDefault();
  openAdminLogin();
