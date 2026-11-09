@@ -70,6 +70,10 @@
       <label for="date">Fecha</label>
       <input id="date" type="date">
 
+      <p class="hint" id="occupiedTimes">
+        Elegí una fecha para consultar los horarios ocupados.
+      </p>
+
       <button type="button" id="checkSlots">Comprobar horario</button>
 
       <label for="time">Elegí el horario</label>
@@ -98,7 +102,6 @@
   </footer>
 
 <script>
-  // CONFIGURACIÓN DE SUPABASE
   const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
 
@@ -162,6 +165,41 @@
       ).join("");
 
     updatePrice();
+  }
+
+  // MOSTRAR LOS HORARIOS QUE YA ESTÁN OCUPADOS
+  async function loadOccupiedTimes() {
+    const date = $("date").value;
+
+    if (!date || !db) return;
+
+    $("occupiedTimes").textContent =
+      "Consultando horarios ocupados...";
+
+    const { data, error } = await db.rpc("get_occupied_times", {
+      p_appointment_date: date
+    });
+
+    if (error) {
+      console.error("Error consultando horarios:", error);
+      $("occupiedTimes").textContent =
+        "No se pudieron consultar los horarios ocupados.";
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      $("occupiedTimes").textContent =
+        "¡Todavía no hay horarios ocupados para este día! 💗";
+      return;
+    }
+
+    $("occupiedTimes").textContent =
+      "🔴 Horarios ocupados: " +
+      data.map(turno =>
+        String(turno.start_time).slice(0, 5) +
+        " a " +
+        String(turno.end_time).slice(0, 5)
+      ).join(" · ");
   }
 
   // COMPROBAR SI EL HORARIO ELEGIDO ESTÁ DISPONIBLE
@@ -252,6 +290,7 @@
         "Ese horario puede haberse ocupado o no estar disponible. Comprobá nuevamente otro horario.",
         "error"
       );
+      await loadOccupiedTimes();
       return;
     }
 
@@ -262,6 +301,8 @@
 
     $("time").disabled = true;
     $("timeInfo").textContent = "¡Turno reservado! 💗";
+
+    await loadOccupiedTimes();
   }
 
   async function init() {
@@ -314,20 +355,25 @@
 
   $("service").addEventListener("change", () => {
     updatePrice();
-    $("timeInfo").textContent = "Volvé a comprobar el horario con el servicio elegido.";
+    $("timeInfo").textContent =
+      "Volvé a comprobar el horario con el servicio elegido.";
   });
 
   $("design").addEventListener("change", () => {
     updatePrice();
-    $("timeInfo").textContent = "Volvé a comprobar el horario con el diseño elegido.";
+    $("timeInfo").textContent =
+      "Volvé a comprobar el horario con el diseño elegido.";
   });
 
   $("date").addEventListener("change", () => {
-    $("timeInfo").textContent = "Elegí una hora y comprobá su disponibilidad.";
+    $("timeInfo").textContent =
+      "Elegí una hora y comprobá su disponibilidad.";
+    loadOccupiedTimes();
   });
 
   $("time").addEventListener("change", () => {
-    $("timeInfo").textContent = "Recordá comprobar la disponibilidad de esta hora.";
+    $("timeInfo").textContent =
+      "Recordá comprobar la disponibilidad de esta hora.";
   });
 
   $("checkSlots").addEventListener("click", checkSlots);
@@ -353,4 +399,5 @@
 </script>
 </body>
 </html>
+
 
