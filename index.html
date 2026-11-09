@@ -1,454 +1,556 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ágatha Nail Estudio</title>
-  <meta name="description" content="Reservá tu turno en Ágatha Nail Estudio. Avenida Italia 1402.">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box}
-    body{margin:0;background:#fbf5f3;color:#493b3b;font-family:'DM Sans',sans-serif}
-    header{text-align:center;padding:42px 18px 32px;background:linear-gradient(145deg,#f3dedb,#fff8f5)}
-    .brand{font-family:'Playfair Display',serif;font-size:38px;color:#865d62;margin:0}
-    header p{color:#8d7374;margin:9px 0 0;letter-spacing:2px;font-size:11px;text-transform:uppercase}
-    main{max-width:680px;margin:28px auto;padding:0 16px 50px}
-    .intro{text-align:center;margin-bottom:25px}
-    h2{font-family:'Playfair Display',serif;color:#865d62;font-size:27px;font-weight:600}
-    .intro p{color:#907d7b;font-size:14px}
-    .panel{background:white;border:1px solid #f0e1de;border-radius:20px;padding:22px;margin-bottom:18px;box-shadow:0 8px 25px #9c777710}
-    .step{font-size:11px;color:#b17e82;letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
-    h3{font-size:17px;margin:8px 0 16px;color:#654d4e}
-    label{display:block;font-size:13px;font-weight:600;margin:13px 0 7px}
-    select,input,textarea{width:100%;padding:13px;border:1px solid #e8d8d6;border-radius:11px;background:#fffdfc;color:#493b3b;font:inherit;font-size:14px}
-    textarea{min-height:75px;resize:vertical}
-    .price{background:#fbf0ee;border-radius:12px;padding:15px;margin-top:16px;display:flex;justify-content:space-between;gap:10px}
-    .price strong{color:#965e66;font-size:20px}
-    button{border:0;border-radius:12px;padding:14px 18px;background:#a66f77;color:white;font:inherit;font-weight:700;cursor:pointer;width:100%;margin-top:16px}
-    button:disabled{opacity:.5;cursor:not-allowed}
-    .whatsapp-button{display:block;text-align:center;text-decoration:none;border-radius:12px;padding:14px 18px;background:#25a85a;color:white;font-weight:700;margin-top:12px}
-    .whatsapp-button[hidden]{display:none}
-    .hint{font-size:12px;color:#9b8583;line-height:1.5}
-    #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px}
-    #message.ok{display:block;background:#edf7ef;color:#326b43}
-    #message.error{display:block;background:#fff0ee;color:#9a4545}
-    footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
-    @media(max-width:480px){.brand{font-size:33px}.panel{padding:18px}}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ágatha Nail Estudio</title>
+<meta name="description" content="Reservá tu turno en Ágatha Nail Estudio. Avenida Italia 1402.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fbf5f3;color:#493b3b;font-family:'DM Sans',sans-serif}
+header{text-align:center;padding:42px 18px 32px;background:linear-gradient(145deg,#f3dedb,#fff8f5)}
+.brand{font-family:'Playfair Display',serif;font-size:38px;color:#865d62;margin:0}
+header p{color:#8d7374;margin:9px 0 0;letter-spacing:2px;font-size:11px;text-transform:uppercase}
+main{max-width:680px;margin:28px auto;padding:0 16px 50px}
+.intro{text-align:center;margin-bottom:25px}
+h2{font-family:'Playfair Display',serif;color:#865d62;font-size:27px;font-weight:600}
+.intro p{color:#907d7b;font-size:14px}
+.panel{background:white;border:1px solid #f0e1de;border-radius:20px;padding:22px;margin-bottom:18px;box-shadow:0 8px 25px #9c777710}
+.step{font-size:11px;color:#b17e82;letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
+h3{font-size:17px;margin:8px 0 16px;color:#654d4e}
+label{display:block;font-size:13px;font-weight:600;margin:13px 0 7px}
+select,input,textarea{width:100%;padding:13px;border:1px solid #e8d8d6;border-radius:11px;background:#fffdfc;color:#493b3b;font:inherit;font-size:14px}
+textarea{min-height:75px;resize:vertical}
+.price{background:#fbf0ee;border-radius:12px;padding:15px;margin-top:16px;display:flex;justify-content:space-between;gap:10px}
+.price strong{color:#965e66;font-size:20px}
+button{border:0;border-radius:12px;padding:14px 18px;background:#a66f77;color:white;font:inherit;font-weight:700;cursor:pointer;width:100%;margin-top:16px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.whatsapp-button{display:block;text-align:center;text-decoration:none;border-radius:12px;padding:14px 18px;background:#25a85a;color:white;font-weight:700;margin-top:12px}
+.whatsapp-button[hidden]{display:none}
+.hint{font-size:12px;color:#9b8583;line-height:1.5}
+#message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px}
+#message.ok{display:block;background:#edf7ef;color:#326b43}
+#message.error{display:block;background:#fff0ee;color:#9a4545}
+footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
+.admin-access{display:inline-block;margin-top:12px;color:#a66f77;text-decoration:underline;cursor:pointer}
+.admin-panel{display:none;max-width:900px;margin:20px auto;padding:0 16px 40px}
+.admin-panel .panel{margin-bottom:16px}
+.admin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.admin-row{border:1px solid #f0e1de;border-radius:13px;padding:14px;margin:12px 0;background:#fffdfc}
+.admin-row p{margin:5px 0;font-size:13px;line-height:1.5}
+.admin-row button{width:auto;margin:8px 6px 0 0;padding:10px 13px;font-size:12px}
+.admin-secondary{background:#8d7778}
+.admin-danger{background:#a84e58}
+.admin-success{background:#56856a}
+.admin-small{font-size:12px;color:#907d7b}
+.admin-hours-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #f0e1de}
+.admin-hours-row label{margin:0}
+@media(max-width:560px){
+ .brand{font-size:33px}
+ .panel{padding:18px}
+ .admin-hours-row{grid-template-columns:1fr 1fr}
+ .admin-hours-row strong{grid-column:1/-1}
+}
+</style>
 </head>
 <body>
-  <header>
-    <h1 class="brand">Ágatha</h1>
-    <p>Nail Estudio · Belleza en tus manos</p>
-  </header>
 
-  <main>
-    <section class="intro">
-      <h2>Tu momento, tu belleza</h2>
-      <p>Elegí tu servicio, diseño y horario. ¡Te esperamos!</p>
-    </section>
+<header>
+<h1 class="brand">Ágatha</h1>
+<p>Nail Estudio · Belleza en tus manos</p>
+</header>
 
-    <section class="panel">
-      <div class="step">Paso 1</div>
-      <h3>Elegí tu servicio</h3>
-      <label for="service">Servicio</label>
-      <select id="service"><option value="">Cargando servicios...</option></select>
+<main>
+<section class="intro">
+<h2>Tu momento, tu belleza</h2>
+<p>Elegí tu servicio, diseño y horario. ¡Te esperamos!</p>
+</section>
 
-      <label for="design">Diseño</label>
-      <select id="design"><option value="">Cargando diseños...</option></select>
+<section class="panel">
+<div class="step">Paso 1</div>
+<h3>Elegí tu servicio</h3>
+<label for="service">Servicio</label>
+<select id="service"><option value="">Cargando servicios...</option></select>
+<label for="design">Diseño</label>
+<select id="design"><option value="">Cargando diseños...</option></select>
+<div class="price">
+<span>Precio estimado</span>
+<strong id="total">$0</strong>
+</div>
+<p class="hint" id="duration"></p>
+</section>
 
-      <div class="price">
-        <span>Precio estimado</span>
-        <strong id="total">$0</strong>
-      </div>
-      <p class="hint" id="duration"></p>
-    </section>
+<section class="panel">
+<div class="step">Paso 2</div>
+<h3>Elegí el día y horario</h3>
+<label for="date">Fecha</label>
+<input id="date" type="date">
+<p class="hint" id="occupiedTimes">Elegí una fecha para consultar los horarios ocupados.</p>
+<button type="button" id="checkSlots">Comprobar horario</button>
+<label for="time">Elegí el horario</label>
+<input id="time" type="time">
+<p class="hint" id="timeInfo">Primero elegí el servicio, el diseño y la fecha.</p>
+<p class="hint">Los turnos están sujetos a disponibilidad.</p>
+</section>
 
-    <section class="panel">
-      <div class="step">Paso 2</div>
-      <h3>Elegí el día y horario</h3>
-      <label for="date">Fecha</label>
-      <input id="date" type="date">
+<section class="panel">
+<div class="step">Paso 3</div>
+<h3>Tus datos</h3>
+<label for="customer">Nombre y apellido</label>
+<input id="customer" type="text" placeholder="Tu nombre completo" autocomplete="name">
+<label for="phone">Teléfono</label>
+<input id="phone" type="tel" placeholder="Tu número de teléfono" autocomplete="tel">
+<label for="notes">¿Querés contarnos algo? (opcional)</label>
+<textarea id="notes" placeholder="Dejanos un comentario..."></textarea>
+<button type="button" id="book">Confirmar reserva</button>
+<div id="message"></div>
+<a id="whatsappButton" class="whatsapp-button" href="#" target="_blank" rel="noopener noreferrer" hidden>💚 Enviar mi reserva por WhatsApp</a>
+</section>
+</main>
 
-      <p class="hint" id="occupiedTimes">
-        Elegí una fecha para consultar los horarios ocupados.
-      </p>
+<footer>
+<strong>Ágatha Nail Estudio</strong><br>
+Avenida Italia 1402<br>
+<a class="admin-access" id="adminAccess">Administración</a>
+</footer>
 
-      <button type="button" id="checkSlots">Comprobar horario</button>
+<section id="adminLogin" class="admin-panel">
+<div class="panel">
+<div class="step">Acceso privado</div>
+<h3>Administración de Ágatha</h3>
+<label for="adminEmail">Correo electrónico</label>
+<input id="adminEmail" type="email" autocomplete="username" placeholder="Tu correo">
+<label for="adminPassword">Contraseña</label>
+<input id="adminPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña">
+<button type="button" id="adminLoginButton">Ingresar</button>
+<button type="button" id="adminCloseLogin" class="admin-secondary">Volver</button>
+<div id="adminLoginMessage" class="hint"></div>
+</div>
+</section>
 
-      <label for="time">Elegí el horario</label>
-      <input id="time" type="time">
-      <p class="hint" id="timeInfo">Primero elegí el servicio, el diseño y la fecha.</p>
-      <p class="hint">Los turnos están sujetos a disponibilidad.</p>
-    </section>
+<section id="adminDashboard" class="admin-panel">
+<div class="panel">
+<div class="step">Panel privado</div>
+<h3>Administración de turnos</h3>
+<p class="admin-small" id="adminWelcome"></p>
+<button type="button" id="refreshAdmin" class="admin-secondary">Actualizar turnos</button>
+<button type="button" id="adminLogout" class="admin-secondary">Cerrar sesión</button>
+<div id="adminAppointments"><p class="hint">Cargando reservas...</p></div>
+</div>
 
-    <section class="panel">
-      <div class="step">Paso 3</div>
-      <h3>Tus datos</h3>
-      <label for="customer">Nombre y apellido</label>
-      <input id="customer" type="text" placeholder="Tu nombre completo" autocomplete="name">
-      <label for="phone">Teléfono</label>
-      <input id="phone" type="tel" placeholder="Tu número de teléfono" autocomplete="tel">
-      <label for="notes">¿Querés contarnos algo? (opcional)</label>
-      <textarea id="notes" placeholder="Dejanos un comentario..."></textarea>
-      <button type="button" id="book">Confirmar reserva</button>
-      <div id="message"></div>
-
-      <a id="whatsappButton" class="whatsapp-button" href="#" target="_blank" rel="noopener noreferrer" hidden>
-        💚 Enviar mi reserva por WhatsApp
-      </a>
-    </section>
-  </main>
-
-  <footer>
-    <strong>Ágatha Nail Estudio</strong><br>
-    Avenida Italia 1402
-  </footer>
+<div class="panel">
+<div class="step">Configuración</div>
+<h3>Horarios de atención</h3>
+<p class="admin-small">Abrí o cerrá cada día y modificá el horario.</p>
+<div id="adminHours"><p class="hint">Cargando horarios...</p></div>
+<button type="button" id="saveAdminHours">Guardar horarios</button>
+<div id="adminHoursMessage" class="hint"></div>
+</div>
+</section>
 
 <script>
-  const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
+const SUPABASE_URL="https://rtouaegbhyilabbuqwsv.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
+const WHATSAPP_NUMBER="5493704564674";
 
-  // WhatsApp de la hermana de Ágatha
-  const WHATSAPP_NUMBER = "5493704564674";
+let db=null;
+let services=[];
+let designs=[];
 
-  let db = null;
-  let services = [];
-  let designs = [];
+const $=id=>document.getElementById(id);
+const money=value=>"$"+Number(value||0).toLocaleString("es-AR");
 
-  const $ = id => document.getElementById(id);
-  const money = value => "$" + Number(value || 0).toLocaleString("es-AR");
+function message(text,type){
+ $("message").textContent=text;
+ $("message").className=type;
+}
+function selectedService(){return services.find(item=>item.id===$("service").value);}
+function selectedDesign(){return designs.find(item=>item.id===$("design").value);}
 
-  function message(text, type) {
-    $("message").textContent = text;
-    $("message").className = type;
-  }
+function updatePrice(){
+ const service=selectedService();
+ const design=selectedDesign();
+ const total=(service?.price||0)+(design?.extra_price||0);
+ const duration=(service?.duration_minutes||0)+(design?.duration_minutes||0);
+ $("total").textContent=money(total);
+ $("duration").textContent=duration?"Duración aproximada: "+duration+" minutos.":"";
+}
 
-  function selectedService() {
-    return services.find(item => item.id === $("service").value);
-  }
+async function loadCatalog(){
+ const [serviceResult,designResult]=await Promise.all([
+  db.from("services").select("*").eq("active",true).order("sort_order"),
+  db.from("design_options").select("*").eq("active",true)
+ ]);
+ if(serviceResult.error)throw serviceResult.error;
+ if(designResult.error)throw designResult.error;
+ services=serviceResult.data||[];
+ designs=designResult.data||[];
+ $("service").innerHTML='<option value="">Seleccioná un servicio</option>'+
+  services.map(s=>`<option value="${s.id}">${s.name} · ${money(s.price)}</option>`).join("");
+ $("design").innerHTML='<option value="">Seleccioná un diseño</option>'+
+  designs.map(d=>`<option value="${d.id}">${d.name}${d.extra_price?" · +"+money(d.extra_price):" · Sin adicional"}</option>`).join("");
+ updatePrice();
+}
 
-  function selectedDesign() {
-    return designs.find(item => item.id === $("design").value);
-  }
+async function loadOccupiedTimes(){
+ const date=$("date").value;
+ if(!date||!db)return;
+ $("occupiedTimes").textContent="Consultando horarios ocupados...";
+ const {data,error}=await db.rpc("get_occupied_times",{p_appointment_date:date});
+ if(error){
+  console.error(error);
+  $("occupiedTimes").textContent="No se pudieron consultar los horarios ocupados.";
+  return;
+ }
+ if(!data||data.length===0){
+  $("occupiedTimes").textContent="¡Todavía no hay horarios ocupados para este día! 💗";
+  return;
+ }
+ $("occupiedTimes").textContent="🔴 Horarios ocupados: "+data.map(t=>
+  String(t.start_time).slice(0,5)+" a "+String(t.end_time).slice(0,5)
+ ).join(" · ");
+}
 
-  function updatePrice() {
-    const service = selectedService();
-    const design = selectedDesign();
+async function checkSlots(){
+ const service=selectedService();
+ const design=selectedDesign();
+ const date=$("date").value;
+ const time=$("time").value;
+ if(!service||!design||!date||!time){
+  message("Elegí un servicio, un diseño, una fecha y un horario.","error");
+  return;
+ }
+ $("time").disabled=true;
+ $("timeInfo").textContent="Comprobando disponibilidad...";
+ const {data,error}=await db.rpc("check_studio_time",{
+  p_service_id:service.id,
+  p_design_option_id:design.id,
+  p_appointment_date:date,
+  p_appointment_time:time
+ });
+ $("time").disabled=false;
+ if(error){
+  $("timeInfo").textContent="No se pudo comprobar el horario.";
+  message("No pudimos comprobar la disponibilidad. Intentá nuevamente.","error");
+  console.error(error);
+  return;
+ }
+ if(!data){
+  $("timeInfo").textContent="Ese horario no está disponible.";
+  message("Ese horario no está disponible. Probá con otra hora.","error");
+  return;
+ }
+ const duration=(service.duration_minutes||0)+(design.duration_minutes||0);
+ const [hours,minutes]=time.split(":").map(Number);
+ const finish=new Date(2000,0,1,hours,minutes+duration);
+ $("timeInfo").textContent="¡Horario disponible! Tu turno terminaría aproximadamente a las "+finish.toTimeString().slice(0,5)+".";
+ message("¡Ese horario está disponible! 💗","ok");
+}
 
-    const total = (service?.price || 0) + (design?.extra_price || 0);
-    const duration =
-      (service?.duration_minutes || 0) +
-      (design?.duration_minutes || 0);
+function prepareWhatsAppMessage(reservation){
+ const dateText=new Date(reservation.date+"T00:00:00").toLocaleDateString("es-AR");
+ const reservationMessage=[
+  "💗 Nueva reserva - Ágatha Nail Estudio",
+  "",
+  "Hola, quiero confirmar mi turno.",
+  "👤 Nombre: "+reservation.name,
+  "📞 Teléfono: "+reservation.phone,
+  "💅 Servicio: "+reservation.service.name,
+  "🎨 Diseño: "+reservation.design.name,
+  "📅 Fecha: "+dateText,
+  "🕒 Horario: "+reservation.time,
+  "💰 Precio: "+money((reservation.service.price||0)+(reservation.design.extra_price||0)),
+  reservation.notes?"📝 Nota: "+reservation.notes:""
+ ].filter(Boolean).join("\n");
+ $("whatsappButton").href="https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodeURIComponent(reservationMessage);
+ $("whatsappButton").hidden=false;
+}
 
-    $("total").textContent = money(total);
-    $("duration").textContent = duration
-      ? "Duración aproximada: " + duration + " minutos."
-      : "";
-  }
+async function createBooking(){
+ const service=selectedService();
+ const design=selectedDesign();
+ const name=$("customer").value.trim();
+ const phone=$("phone").value.trim();
+ const date=$("date").value;
+ const time=$("time").value;
+ $("whatsappButton").hidden=true;
+ if(!service||!design||!date||!time||!name||!phone){
+  message("Completá el servicio, diseño, fecha, horario, nombre y teléfono.","error");
+  return;
+ }
+ $("book").disabled=true;
+ $("book").textContent="Confirmando...";
+ const {error}=await db.rpc("create_studio_appointment",{
+  p_service_id:service.id,
+  p_design_option_id:design.id,
+  p_customer_name:name,
+  p_customer_phone:phone,
+  p_appointment_date:date,
+  p_appointment_time:time,
+  p_notes:$("notes").value.trim()
+ });
+ $("book").disabled=false;
+ $("book").textContent="Confirmar reserva";
+ if(error){
+  console.error(error);
+  message("Ese horario puede haberse ocupado o no estar disponible. Comprobá nuevamente otro horario.","error");
+  await loadOccupiedTimes();
+  return;
+ }
+ message("¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗","ok");
+ prepareWhatsAppMessage({name,phone,date,time,service,design,notes:$("notes").value.trim()});
+ $("time").disabled=true;
+ $("timeInfo").textContent="¡Turno reservado! 💗";
+ await loadOccupiedTimes();
+}
 
-  async function loadCatalog() {
-    const [serviceResult, designResult] = await Promise.all([
-      db.from("services").select("*").eq("active", true).order("sort_order"),
-      db.from("design_options").select("*").eq("active", true)
-    ]);
+async function init(){
+ try{
+  $("service").innerHTML='<option value="">Conectando con Supabase...</option>';
+  $("design").innerHTML='<option value="">Conectando con Supabase...</option>';
+  if(!window.supabase||!window.supabase.createClient)throw new Error("No se pudo cargar la biblioteca de Supabase.");
+  if(!SUPABASE_URL.startsWith("https://")||!SUPABASE_ANON_KEY.startsWith("sb_publishable_"))throw new Error("La configuración de Supabase es incorrecta.");
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  await loadCatalog();
+  message("¡Servicios y diseños cargados correctamente! 💗","ok");
+ }catch(error){
+  console.error("ERROR REAL DE INICIO:",error);
+  $("service").innerHTML='<option value="">Error al cargar servicios</option>';
+  $("design").innerHTML='<option value="">Error al cargar diseños</option>';
+  const detalle=[error.message,error.details,error.hint,error.code].filter(Boolean).join(" | ");
+  message("Error de conexión: "+detalle,"error");
+ }
+}
 
-    if (serviceResult.error) throw serviceResult.error;
-    if (designResult.error) throw designResult.error;
+$("service").addEventListener("change",()=>{
+ updatePrice();
+ $("timeInfo").textContent="Volvé a comprobar el horario con el servicio elegido.";
+});
+$("design").addEventListener("change",()=>{
+ updatePrice();
+ $("timeInfo").textContent="Volvé a comprobar el horario con el diseño elegido.";
+});
+$("date").addEventListener("change",()=>{
+ $("timeInfo").textContent="Elegí una hora y comprobá su disponibilidad.";
+ loadOccupiedTimes();
+});
+$("time").addEventListener("change",()=>{
+ $("timeInfo").textContent="Recordá comprobar la disponibilidad de esta hora.";
+});
+$("checkSlots").addEventListener("click",checkSlots);
+$("book").addEventListener("click",createBooking);
 
-    services = serviceResult.data || [];
-    designs = designResult.data || [];
+// Fechas disponibles: hoy hasta 30 días
+const today=new Date();
+const localToday=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+const maxDate=new Date(today);
+maxDate.setDate(maxDate.getDate()+30);
+const localMax=new Date(maxDate.getTime()-maxDate.getTimezoneOffset()*60000).toISOString().slice(0,10);
+$("date").min=localToday;
+$("date").max=localMax;
 
-    $("service").innerHTML =
-      '<option value="">Seleccioná un servicio</option>' +
-      services.map(s =>
-        `<option value="${s.id}">${s.name} · ${money(s.price)}</option>`
-      ).join("");
+// ADMINISTRACIÓN PRIVADA
+const weekdayNames=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
-    $("design").innerHTML =
-      '<option value="">Seleccioná un diseño</option>' +
-      designs.map(d =>
-        `<option value="${d.id}">${d.name}${d.extra_price ? " · +" + money(d.extra_price) : " · Sin adicional"}</option>`
-      ).join("");
+function adminText(v){
+ return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function openAdminLogin(){
+ $("adminLogin").style.display="block";
+ $("adminDashboard").style.display="none";
+ $("adminLogin").scrollIntoView({behavior:"smooth"});
+}
+function hideAdminSections(){
+ $("adminLogin").style.display="none";
+ $("adminDashboard").style.display="none";
+}
 
-    updatePrice();
-  }
+async function verifyAdmin(){
+ const {data,error}=await db.rpc("is_studio_admin");
+ if(error||data!==true){
+  await db.auth.signOut();
+  throw new Error("Esta cuenta no tiene permisos de administración.");
+ }
+}
 
-  // MOSTRAR LOS HORARIOS QUE YA ESTÁN OCUPADOS
-  async function loadOccupiedTimes() {
-    const date = $("date").value;
-
-    if (!date || !db) return;
-
-    $("occupiedTimes").textContent =
-      "Consultando horarios ocupados...";
-
-    const { data, error } = await db.rpc("get_occupied_times", {
-      p_appointment_date: date
-    });
-
-    if (error) {
-      console.error("Error consultando horarios:", error);
-      $("occupiedTimes").textContent =
-        "No se pudieron consultar los horarios ocupados.";
-      return;
-    }
-
-    if (!data || data.length === 0) {
-      $("occupiedTimes").textContent =
-        "¡Todavía no hay horarios ocupados para este día! 💗";
-      return;
-    }
-
-    $("occupiedTimes").textContent =
-      "🔴 Horarios ocupados: " +
-      data.map(turno =>
-        String(turno.start_time).slice(0, 5) +
-        " a " +
-        String(turno.end_time).slice(0, 5)
-      ).join(" · ");
-  }
-
-  // COMPROBAR SI EL HORARIO ELEGIDO ESTÁ DISPONIBLE
-  async function checkSlots() {
-    const service = selectedService();
-    const design = selectedDesign();
-    const date = $("date").value;
-    const time = $("time").value;
-
-    if (!service || !design || !date || !time) {
-      message("Elegí un servicio, un diseño, una fecha y un horario.", "error");
-      return;
-    }
-
-    $("time").disabled = true;
-    $("timeInfo").textContent = "Comprobando disponibilidad...";
-
-    const { data, error } = await db.rpc("check_studio_time", {
-      p_service_id: service.id,
-      p_design_option_id: design.id,
-      p_appointment_date: date,
-      p_appointment_time: time
-    });
-
-    $("time").disabled = false;
-
-    if (error) {
-      $("timeInfo").textContent = "No se pudo comprobar el horario.";
-      message("No pudimos comprobar la disponibilidad. Intentá nuevamente.", "error");
-      console.error(error);
-      return;
-    }
-
-    if (!data) {
-      $("timeInfo").textContent = "Ese horario no está disponible.";
-      message("Ese horario no está disponible. Probá con otra hora.", "error");
-      return;
-    }
-
-    const duration =
-      (service.duration_minutes || 0) +
-      (design.duration_minutes || 0);
-
-    const [hours, minutes] = time.split(":").map(Number);
-    const finish = new Date(2000, 0, 1, hours, minutes + duration);
-    const finishTime = finish.toTimeString().slice(0, 5);
-
-    $("timeInfo").textContent =
-      "¡Horario disponible! Tu turno terminaría aproximadamente a las " +
-      finishTime + ".";
-
-    message("¡Ese horario está disponible! 💗", "ok");
-  }
-
-  // PREPARAR EL MENSAJE PARA WHATSAPP
-  function prepareWhatsAppMessage(reservation) {
-    const dateText = new Date(
-      reservation.date + "T00:00:00"
-    ).toLocaleDateString("es-AR");
-
-    const reservationMessage = [
-      "💗 Nueva reserva - Ágatha Nail Estudio",
-      "",
-      "Hola, quiero confirmar mi turno.",
-      "👤 Nombre: " + reservation.name,
-      "📞 Teléfono: " + reservation.phone,
-      "💅 Servicio: " + reservation.service.name,
-      "🎨 Diseño: " + reservation.design.name,
-      "📅 Fecha: " + dateText,
-      "🕒 Horario: " + reservation.time,
-      "💰 Precio: " + money(
-        (reservation.service.price || 0) +
-        (reservation.design.extra_price || 0)
-      ),
-      reservation.notes ? "📝 Nota: " + reservation.notes : ""
-    ].filter(Boolean).join("\n");
-
-    $("whatsappButton").href =
-      "https://wa.me/" + WHATSAPP_NUMBER +
-      "?text=" + encodeURIComponent(reservationMessage);
-
-    $("whatsappButton").hidden = false;
-  }
-
-  // REGISTRAR LA RESERVA
-  async function createBooking() {
-    const service = selectedService();
-    const design = selectedDesign();
-    const name = $("customer").value.trim();
-    const phone = $("phone").value.trim();
-    const date = $("date").value;
-    const time = $("time").value;
-
-    // Ocultar el botón anterior si se está haciendo otra reserva
-    $("whatsappButton").hidden = true;
-
-    if (!service || !design || !date || !time || !name || !phone) {
-      message("Completá el servicio, diseño, fecha, horario, nombre y teléfono.", "error");
-      return;
-    }
-
-    $("book").disabled = true;
-    $("book").textContent = "Confirmando...";
-
-    const { error } = await db.rpc("create_studio_appointment", {
-      p_service_id: service.id,
-      p_design_option_id: design.id,
-      p_customer_name: name,
-      p_customer_phone: phone,
-      p_appointment_date: date,
-      p_appointment_time: time,
-      p_notes: $("notes").value.trim()
-    });
-
-    $("book").disabled = false;
-    $("book").textContent = "Confirmar reserva";
-
-    if (error) {
-      console.error("Error al reservar:", error);
-      message(
-        "Ese horario puede haberse ocupado o no estar disponible. Comprobá nuevamente otro horario.",
-        "error"
-      );
-      await loadOccupiedTimes();
-      return;
-    }
-
-    message(
-      "¡Tu reserva fue registrada correctamente! Gracias por elegir Ágatha Nail Estudio 💗",
-      "ok"
-    );
-
-    // Mostrar el botón de WhatsApp solo si la reserva se guardó bien
-    prepareWhatsAppMessage({
-      name,
-      phone,
-      date,
-      time,
-      service,
-      design,
-      notes: $("notes").value.trim()
-    });
-
-    $("time").disabled = true;
-    $("timeInfo").textContent = "¡Turno reservado! 💗";
-
-    await loadOccupiedTimes();
-  }
-
-  async function init() {
-    try {
-      $("service").innerHTML =
-        '<option value="">Conectando con Supabase...</option>';
-
-      $("design").innerHTML =
-        '<option value="">Conectando con Supabase...</option>';
-
-      if (!window.supabase || !window.supabase.createClient) {
-        throw new Error("No se pudo cargar la biblioteca de Supabase.");
-      }
-
-      if (
-        !SUPABASE_URL.startsWith("https://") ||
-        !SUPABASE_ANON_KEY.startsWith("sb_publishable_")
-      ) {
-        throw new Error("La configuración de Supabase es incorrecta.");
-      }
-
-      db = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-      );
-
-      await loadCatalog();
-
-      message("¡Servicios y diseños cargados correctamente! 💗", "ok");
-
-    } catch (error) {
-      console.error("ERROR REAL DE INICIO:", error);
-
-      $("service").innerHTML =
-        '<option value="">Error al cargar servicios</option>';
-
-      $("design").innerHTML =
-        '<option value="">Error al cargar diseños</option>';
-
-      const detalle = [
-        error.message,
-        error.details,
-        error.hint,
-        error.code
-      ].filter(Boolean).join(" | ");
-
-      message("Error de conexión: " + detalle, "error");
-    }
-  }
-
-  $("service").addEventListener("change", () => {
-    updatePrice();
-    $("timeInfo").textContent =
-      "Volvé a comprobar el horario con el servicio elegido.";
+async function adminSignIn(){
+ $("adminLoginButton").disabled=true;
+ $("adminLoginMessage").textContent="Verificando acceso...";
+ try{
+  const {error}=await db.auth.signInWithPassword({
+   email:$("adminEmail").value.trim(),
+   password:$("adminPassword").value
   });
+  if(error)throw error;
+  await verifyAdmin();
+  $("adminPassword").value="";
+  $("adminLoginMessage").textContent="";
+  await showAdminDashboard();
+ }catch(e){
+  $("adminLoginMessage").textContent=e.message||"No se pudo iniciar sesión.";
+ }finally{
+  $("adminLoginButton").disabled=false;
+ }
+}
 
-  $("design").addEventListener("change", () => {
-    updatePrice();
-    $("timeInfo").textContent =
-      "Volvé a comprobar el horario con el diseño elegido.";
-  });
+async function showAdminDashboard(){
+ const {data:{user}}=await db.auth.getUser();
+ $("adminWelcome").textContent="Sesión iniciada: "+(user?.email||"administrador");
+ $("adminLogin").style.display="none";
+ $("adminDashboard").style.display="block";
+ await Promise.all([loadAdminAppointments(),loadAdminHours()]);
+ $("adminDashboard").scrollIntoView({behavior:"smooth"});
+}
 
-  $("date").addEventListener("change", () => {
-    $("timeInfo").textContent =
-      "Elegí una hora y comprobá su disponibilidad.";
-    loadOccupiedTimes();
-  });
+async function loadAdminAppointments(){
+ $("adminAppointments").innerHTML='<p class="hint">Cargando reservas...</p>';
+ const [ar,sr,dr]=await Promise.all([
+  db.from("appointments").select("*").order("appointment_date",{ascending:false}).order("appointment_time",{ascending:false}).limit(150),
+  db.from("services").select("id,name"),
+  db.from("design_options").select("id,name")
+ ]);
+ if(ar.error){
+  $("adminAppointments").textContent="Error al cargar reservas: "+ar.error.message;
+  return;
+ }
+ const sm=Object.fromEntries((sr.data||[]).map(x=>[x.id,x.name]));
+ const dm=Object.fromEntries((dr.data||[]).map(x=>[x.id,x.name]));
+ if(!ar.data?.length){
+  $("adminAppointments").innerHTML='<p class="hint">Todavía no hay reservas.</p>';
+  return;
+ }
+ $("adminAppointments").innerHTML=ar.data.map(a=>{
+  const day=new Date(a.appointment_date+"T00:00:00").toLocaleDateString("es-AR");
+  const active=["confirmed","pending"].includes(a.status);
+  return `<article class="admin-row">
+   <p><strong>${adminText(a.customer_name)}</strong> · ${adminText(a.customer_phone)}</p>
+   <p>📅 ${day} · 🕒 ${adminText(String(a.appointment_time).slice(0,5))}</p>
+   <p>💅 ${adminText(sm[a.service_id]||"Servicio")} · 🎨 ${adminText(dm[a.design_option_id]||"Diseño")}</p>
+   <p>💰 ${money(a.total_price)} · ⏱️ ${adminText(a.duration_minutes)} min</p>
+   ${a.notes?'<p>📝 '+adminText(a.notes)+'</p>':''}
+   <p><strong>Estado:</strong> ${adminText(a.status)}</p>
+   ${active?`
+    <div class="admin-grid">
+     <div><label>Nueva fecha</label><input id="rd-${a.id}" type="date" min="${localToday}" max="${localMax}" value="${adminText(a.appointment_date)}"></div>
+     <div><label>Nuevo horario</label><input id="rt-${a.id}" type="time" value="${adminText(String(a.appointment_time).slice(0,5))}"></div>
+    </div>
+    <button class="admin-success" type="button" onclick="adminReschedule('${a.id}')">Reprogramar</button>
+    <button class="admin-danger" type="button" onclick="adminCancel('${a.id}')">Cancelar turno</button>
+   `:'<p class="admin-small">Reserva histórica.</p>'}
+  </article>`;
+ }).join("");
+}
 
-  $("time").addEventListener("change", () => {
-    $("timeInfo").textContent =
-      "Recordá comprobar la disponibilidad de esta hora.";
-  });
+async function adminCancel(id){
+ if(!confirm("¿Cancelar este turno? Quedará guardado en el historial."))return;
+ const {data,error}=await db.rpc("admin_cancel_appointment",{p_appointment_id:id});
+ if(error){
+  alert("No se pudo cancelar: "+error.message);
+  return;
+ }
+ if(!data){
+  alert("El turno no está activo.");
+  return;
+ }
+ await loadAdminAppointments();
+ alert("Turno cancelado. Se conservó en el historial.");
+}
 
-  $("checkSlots").addEventListener("click", checkSlots);
-  $("book").addEventListener("click", createBooking);
+async function adminReschedule(id){
+ const date=$("rd-"+id)?.value;
+ const time=$("rt-"+id)?.value;
+ if(!date||!time){
+  alert("Elegí fecha y hora.");
+  return;
+ }
+ if(!confirm("¿Confirmás reprogramar este turno?"))return;
+ const {data,error}=await db.rpc("admin_reschedule_appointment",{
+  p_appointment_id:id,
+  p_new_date:date,
+  p_new_time:time
+ });
+ if(error){
+  alert("No se pudo reprogramar: "+error.message);
+  return;
+ }
+ if(!data){
+  alert("No se pudo reprogramar.");
+  return;
+ }
+ await loadAdminAppointments();
+ alert("¡Turno reprogramado correctamente!");
+}
 
-  // FECHAS DISPONIBLES: HOY HASTA 30 DÍAS
-  const today = new Date();
-  const localToday = new Date(
-    today.getTime() - today.getTimezoneOffset() * 60000
-  ).toISOString().slice(0, 10);
+async function loadAdminHours(){
+ const {data,error}=await db.from("business_hours").select("*").order("weekday");
+ if(error){
+  $("adminHours").textContent="Error: "+error.message;
+  return;
+ }
+ $("adminHours").innerHTML=(data||[]).map(h=>`
+  <div class="admin-hours-row" data-hours-id="${h.id}">
+   <strong>${weekdayNames[h.weekday]||"Día"}</strong>
+   <label><input type="checkbox" class="hopen" ${h.is_open?"checked":""}> Abierto</label>
+   <input type="time" class="hstart" value="${h.start_time?String(h.start_time).slice(0,5):"08:00"}" aria-label="Apertura">
+   <input type="time" class="hend" value="${h.end_time?String(h.end_time).slice(0,5):"21:00"}" aria-label="Cierre">
+  </div>
+ `).join("");
+}
 
-  const maxDate = new Date(today);
-  maxDate.setDate(maxDate.getDate() + 30);
+async function saveAdminHours(){
+ $("saveAdminHours").disabled=true;
+ $("adminHoursMessage").textContent="Guardando...";
+ try{
+  for(const r of $("adminHours").querySelectorAll("[data-hours-id]")){
+   const open=r.querySelector(".hopen").checked;
+   const start=r.querySelector(".hstart").value;
+   const end=r.querySelector(".hend").value;
+   if(open&&(!start||!end||start>=end)){
+    throw new Error("La apertura debe ser anterior al cierre.");
+   }
+   const {error}=await db.from("business_hours").update({
+    is_open:open,
+    start_time:open?start:null,
+    end_time:open?end:null
+   }).eq("id",r.dataset.hoursId);
+   if(error)throw error;
+  }
+  $("adminHoursMessage").textContent="¡Horarios guardados correctamente! 💗";
+ }catch(e){
+  $("adminHoursMessage").textContent="Error: "+e.message;
+ }finally{
+  $("saveAdminHours").disabled=false;
+ }
+}
 
-  const localMax = new Date(
-    maxDate.getTime() - maxDate.getTimezoneOffset() * 60000
-  ).toISOString().slice(0, 10);
+async function restoreAdminSession(){
+ const {data:{session}}=await db.auth.getSession();
+ if(!session)return;
+ try{
+  await verifyAdmin();
+  await showAdminDashboard();
+ }catch(e){
+  console.warn(e.message);
+ }
+}
 
-  $("date").min = localToday;
-  $("date").max = localMax;
+$("adminLoginButton").addEventListener("click",adminSignIn);
+$("adminPassword").addEventListener("keydown",e=>{
+ if(e.key==="Enter")adminSignIn();
+});
+$("adminCloseLogin").addEventListener("click",hideAdminSections);
+$("refreshAdmin").addEventListener("click",loadAdminAppointments);
+$("adminLogout").addEventListener("click",async()=>{
+ await db.auth.signOut();
+ hideAdminSections();
+});
+$("saveAdminHours").addEventListener("click",saveAdminHours);
+$("adminAccess").addEventListener("click",openAdminLogin);
 
-  init();
+// Iniciar la página y restaurar una sesión administrativa válida
+init().then(()=>restoreAdminSession());
 </script>
 </body>
 </html>
