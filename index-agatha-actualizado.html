@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ágatha Nail Estudio</title>
   <meta name="description" content="Reservá tu turno en Ágatha Nail Estudio. Avenida Italia 1402.">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 
@@ -30,7 +31,7 @@
     button{border:0;border-radius:12px;padding:14px 18px;background:#a66f77;color:white;font:inherit;font-weight:700;cursor:pointer;width:100%;margin-top:16px}
     button:disabled{opacity:.5;cursor:not-allowed}
     .hint{font-size:12px;color:#9b8583;line-height:1.5}
-    #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px;overflow-wrap:anywhere}
+    #message{padding:13px;border-radius:10px;margin-top:14px;display:none;font-size:14px;overflow-wrap:anywhere;line-height:1.5}
     #message.ok{display:block;background:#edf7ef;color:#326b43}
     #message.error{display:block;background:#fff0ee;color:#9a4545}
     footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
@@ -56,12 +57,12 @@
 
       <label for="service">Servicio</label>
       <select id="service">
-        <option value="">Cargando servicios...</option>
+        <option value="">Conectando...</option>
       </select>
 
       <label for="design">Diseño</label>
       <select id="design">
-        <option value="">Cargando diseños...</option>
+        <option value="">Conectando...</option>
       </select>
 
       <div class="price">
@@ -112,7 +113,7 @@
   </footer>
 
 <script>
-  // CONEXIÓN CON SUPABASE
+  // CONFIGURACIÓN DE SUPABASE
   const SUPABASE_URL = "https://rtouaegbhyilabbuqwsv.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
 
@@ -182,74 +183,113 @@
     $("design").innerHTML =
       '<option value="">Cargando diseños...</option>';
 
-    // No se ordena por sort_order para evitar errores
-    // si esa columna no existe en la tabla.
-    const [serviceResult, designResult] = await Promise.all([
-      db.from("services")
-        .select("*")
-        .eq("active", true),
+    try {
+      // Consultar servicios y diseños activos.
+      // Se evita ordenar por sort_order porque puede no existir.
+      const [serviceResult, designResult] = await Promise.all([
+        db.from("services")
+          .select("*")
+          .eq("active", true),
 
-      db.from("design_options")
-        .select("*")
-        .eq("active", true)
-    ]);
+        db.from("design_options")
+          .select("*")
+          .eq("active", true)
+      ]);
 
-    if (serviceResult.error) {
-      throw new Error(
-        "Error consultando services: " +
-        errorText(serviceResult.error)
-      );
-    }
+      if (serviceResult.error) {
+        throw new Error(
+          "Tabla services: " + errorText(serviceResult.error)
+        );
+      }
 
-    if (designResult.error) {
-      throw new Error(
-        "Error consultando design_options: " +
-        errorText(designResult.error)
-      );
-    }
+      if (designResult.error) {
+        throw new Error(
+          "Tabla design_options: " + errorText(designResult.error)
+        );
+      }
 
-    services = serviceResult.data || [];
-    designs = designResult.data || [];
+      services = serviceResult.data || [];
+      designs = designResult.data || [];
 
-    $("service").innerHTML =
-      '<option value="">Seleccioná un servicio</option>';
+      $("service").innerHTML =
+        '<option value="">Seleccioná un servicio</option>';
 
-    $("design").innerHTML =
-      '<option value="">Seleccioná un diseño</option>';
+      $("design").innerHTML =
+        '<option value="">Seleccioná un diseño</option>';
 
-    services.forEach(service => {
-      const option = document.createElement("option");
-      option.value = String(service.id);
-      option.textContent =
-        service.name + " · " + money(service.price);
-      $("service").appendChild(option);
-    });
+      services.forEach(service => {
+        const option = document.createElement("option");
+        option.value = String(service.id);
+        option.textContent =
+          (service.name || "Servicio") +
+          " · " + money(service.price);
 
-    designs.forEach(design => {
-      const option = document.createElement("option");
-      option.value = String(design.id);
-      option.textContent =
-        design.name +
-        (Number(design.extra_price || 0) > 0
-          ? " · +" + money(design.extra_price)
-          : " · Sin adicional");
-      $("design").appendChild(option);
-    });
+        $("service").appendChild(option);
+      });
 
-    $("service").disabled = services.length === 0;
-    $("design").disabled = designs.length === 0;
+      designs.forEach(design => {
+        const option = document.createElement("option");
+        option.value = String(design.id);
+        option.textContent =
+          (design.name || "Diseño") +
+          (Number(design.extra_price || 0) > 0
+            ? " · +" + money(design.extra_price)
+            : " · Sin adicional");
 
-    updatePrice();
+        $("design").appendChild(option);
+      });
 
-    if (!services.length || !designs.length) {
+      $("service").disabled = services.length === 0;
+      $("design").disabled = designs.length === 0;
+
+      updatePrice();
+
+      if (!services.length) {
+        $("service").innerHTML =
+          '<option value="">No hay servicios activos</option>';
+
+        showMessage(
+          "Supabase respondió correctamente, pero la tabla services no tiene servicios con active = true.",
+          "error"
+        );
+        return;
+      }
+
+      if (!designs.length) {
+        $("design").innerHTML =
+          '<option value="">No hay diseños activos</option>';
+
+        showMessage(
+          "Los servicios se cargaron, pero no hay diseños activos en design_options.",
+          "error"
+        );
+        return;
+      }
+
       showMessage(
-        "La conexión funciona, pero no hay servicios o diseños activos cargados en Supabase.",
+        "¡Servicios y diseños cargados correctamente!",
+        "ok"
+      );
+
+    } catch (error) {
+      console.error("ERROR REAL DE CATÁLOGO:", error);
+
+      $("service").innerHTML =
+        '<option value="">Error al cargar servicios</option>';
+
+      $("design").innerHTML =
+        '<option value="">Error al cargar diseños</option>';
+
+      $("service").disabled = true;
+      $("design").disabled = true;
+
+      showMessage(
+        "ERROR DE SUPABASE: " + errorText(error),
         "error"
       );
-      return;
-    }
 
-    showMessage("Servicios y diseños cargados correctamente.", "ok");
+      throw error;
+    }
   }
 
   async function checkSlots() {
@@ -306,27 +346,24 @@
 
       $("time").disabled = !slots.length;
 
-      if (slots.length) {
-        showMessage(
-          "¡Estos son los horarios disponibles!",
-          "ok"
-        );
-      } else {
-        showMessage(
-          "No hay horarios disponibles para esa fecha.",
-          "error"
-        );
-      }
+      showMessage(
+        slots.length
+          ? "¡Estos son los horarios disponibles!"
+          : "No hay horarios disponibles para esa fecha.",
+        slots.length ? "ok" : "error"
+      );
+
     } catch (error) {
-      console.error("Error consultando horarios:", error);
+      console.error("ERROR CONSULTANDO HORARIOS:", error);
 
       $("time").innerHTML =
         '<option value="">Error al consultar horarios</option>';
 
       showMessage(
-        "Error al consultar horarios: " + errorText(error),
+        "ERROR DE HORARIOS: " + errorText(error),
         "error"
       );
+
     } finally {
       $("checkSlots").disabled = false;
     }
@@ -382,12 +419,13 @@
         '<option value="">Turno reservado</option>';
 
     } catch (error) {
-      console.error("Error creando reserva:", error);
+      console.error("ERROR CREANDO RESERVA:", error);
 
       showMessage(
-        "No se pudo registrar la reserva: " + errorText(error),
+        "ERROR AL RESERVAR: " + errorText(error),
         "error"
       );
+
     } finally {
       $("book").disabled = false;
       $("book").textContent = "Confirmar reserva";
@@ -398,7 +436,7 @@
     try {
       if (!window.supabase || !window.supabase.createClient) {
         throw new Error(
-          "No se pudo cargar la biblioteca de Supabase. Revisá tu conexión a internet."
+          "No se pudo cargar la biblioteca de Supabase. Revisá la conexión a internet."
         );
       }
 
@@ -419,7 +457,7 @@
       await loadCatalog();
 
     } catch (error) {
-      console.error("Error inicializando la página:", error);
+      console.error("ERROR INICIALIZANDO:", error);
 
       $("service").innerHTML =
         '<option value="">No se pudo conectar</option>';
@@ -431,7 +469,7 @@
       $("design").disabled = true;
 
       showMessage(
-        "Error de conexión con Supabase: " + errorText(error),
+        "ERROR DE CONEXIÓN: " + errorText(error),
         "error"
       );
     }
@@ -462,6 +500,7 @@
 </script>
 </body>
 </html>
+
 
 
 
