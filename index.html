@@ -36,14 +36,14 @@ button:disabled{opacity:.5;cursor:not-allowed}
 #message.error{display:block;background:#fff0ee;color:#9a4545}
 footer{text-align:center;padding:25px;color:#9b8583;font-size:12px}
 
-/* Acceso privado: ícono pequeño y discreto */
+/* Acceso privado */
 header{position:relative;padding-right:58px}
 .admin-access{position:absolute;top:13px;right:14px;width:34px;height:34px;display:grid;place-items:center;border:1px solid #ead3d0;border-radius:50%;background:#fffaf8;color:#b77d86;opacity:.78;cursor:pointer;text-decoration:none;box-shadow:0 2px 8px #9c777710;transition:opacity .2s,transform .2s}
 .admin-access:hover,.admin-access:focus-visible{opacity:1;transform:scale(1.06);box-shadow:0 4px 12px #9c777725;outline:none}
 .admin-access svg{display:block;width:21px;height:21px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-/* Panel de administración renovado */
+/* Panel de administración */
 .admin-panel{display:none;max-width:960px;margin:24px auto;padding:0 16px 48px}
 .admin-panel .panel{position:relative;margin-bottom:20px;padding:26px;border:1px solid #eeddda;border-radius:22px;background:linear-gradient(160deg,#fff 0%,#fffaf8 100%);box-shadow:0 12px 35px #8d646410}
 .admin-panel .step{display:inline-block;padding:6px 11px;border-radius:20px;background:#f8e9e8;color:#a66f77;font-size:10px;letter-spacing:1.4px}
@@ -61,13 +61,26 @@ header{position:relative;padding-right:58px}
 .admin-danger{background:#b65f68}
 .admin-success{background:#7d9a82}
 .admin-small{font-size:12px;color:#907d7b;line-height:1.6}
+
+/* Estadísticas */
+.stats-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin:16px 0}
+.stats-card{padding:15px;border:1px solid #f0e1de;border-radius:15px;background:#fff}
+.stats-card span{display:block;color:#9b8583;font-size:11px}
+.stats-card strong{display:block;margin-top:5px;color:#865d62;font-size:25px}
+.stats-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
+.stats-toggle{display:flex;align-items:center;gap:9px;font-size:13px;color:#765f60}
+.stats-toggle input{width:auto;accent-color:#a66f77}
+.stats-day{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid #f0e8e5;font-size:12px}
+.stats-day strong{color:#765257}
+
+/* Horarios */
 .admin-hours-row{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #f0e8e5}
 .admin-hours-row strong{color:#765257}
 .admin-hours-row input[type="checkbox"]{width:auto;accent-color:#a66f77}
 .admin-hours-row input[type="time"]{min-width:0}
 .admin-hours-row label{margin:0}
 
-/* Galería pública y administración */
+/* Galería */
 .gallery-section{display:none;margin:0 auto 34px;max-width:620px;padding:0 2px}
 .gallery-kicker{text-align:center;color:#b17e82;font-size:9px;font-weight:700;letter-spacing:2.8px;text-transform:uppercase;margin:0 0 8px}
 .gallery-heading{text-align:center;font-family:'Playfair Display',serif;font-size:27px;font-weight:500;color:#865d62;margin:0 0 7px}
@@ -194,6 +207,18 @@ Avenida Italia 1402<br>
 <p class="admin-small" id="adminWelcome"></p>
 <button type="button" id="refreshAdmin" class="admin-secondary">Actualizar turnos</button>
 <button type="button" id="adminLogout" class="admin-secondary">Cerrar sesión</button>
+
+<div class="panel" id="adminStatsPanel">
+ <div class="step">Resumen del estudio</div>
+ <h3>Estadísticas de reservas</h3>
+ <div class="stats-toolbar">
+  <span class="admin-small">Resumen de reservas archivadas automáticamente.</span>
+  <label class="stats-toggle"><input type="checkbox" id="statsVisibility" checked> Mostrar estadísticas</label>
+ </div>
+ <div id="adminStatsContent"><p class="hint">Cargando estadísticas...</p></div>
+ <div id="adminStatsMessage" class="admin-small" role="status"></div>
+</div>
+
 <div id="adminAppointments"><p class="hint">Cargando reservas...</p></div>
 </div>
 
@@ -409,10 +434,8 @@ async function listGalleryPhotos(){
 async function loadPublicGallery(){
  const section=$("publicGallery");
  const track=$("galleryTrack");
-
  try{
   const photos=await listGalleryPhotos();
-
   if(!photos.length){
    section.style.display="none";
    if(galleryTimer){
@@ -421,28 +444,22 @@ async function loadPublicGallery(){
    }
    return;
   }
-
   track.innerHTML=photos.map((photo,index)=>`
    <article class="gallery-card">
     <img src="${adminText(photo.url)}" alt="Trabajo de uñas de Ágatha ${index+1}" loading="lazy">
     <div class="gallery-caption">Belleza en cada detalle</div>
    </article>
   `).join("");
-
   section.style.display="block";
-
   if(galleryTimer)clearInterval(galleryTimer);
-
   if(photos.length>1){
    galleryTimer=setInterval(()=>{
     const next=track.scrollLeft+track.clientWidth>=track.scrollWidth-10
      ?0
      :track.scrollLeft+Math.min(280,track.clientWidth*.78);
-
     track.scrollTo({left:next,behavior:"smooth"});
    },3800);
   }
-
  }catch(error){
   console.error("No se pudo cargar la galería:",error);
   section.style.display="none";
@@ -452,26 +469,21 @@ async function loadPublicGallery(){
 async function loadAdminGallery(){
  const list=$("galleryAdminList");
  list.innerHTML='<p class="admin-small">Cargando fotografías...</p>';
-
  try{
   const photos=await listGalleryPhotos();
-
   if(!photos.length){
    list.innerHTML='<p class="admin-small">Todavía no hay fotografías publicadas. Cuando subas la primera, aparecerá aquí.</p>';
    return;
   }
-
   list.innerHTML=photos.map((photo,index)=>`
    <div class="gallery-admin-item">
     <img src="${adminText(photo.url)}" alt="Fotografía ${index+1}" loading="lazy">
     <button type="button" class="admin-danger" data-delete-gallery="${adminText(photo.name)}">Eliminar</button>
    </div>
   `).join("");
-
   list.querySelectorAll("[data-delete-gallery]").forEach(button=>{
    button.addEventListener("click",()=>deleteGalleryPhoto(button.dataset.deleteGallery));
   });
-
  }catch(error){
   list.innerHTML='<p class="admin-small">No se pudieron cargar las fotos: '+adminText(error.message)+'</p>';
  }
@@ -481,51 +493,34 @@ async function uploadGalleryPhotos(){
  const input=$("galleryFiles");
  const files=Array.from(input.files||[]);
  const messageBox=$("galleryAdminMessage");
-
  if(!files.length){
   messageBox.textContent="Primero elegí una o más fotografías.";
   return;
  }
-
  const allowed=["image/jpeg","image/png","image/webp"];
-
  for(const file of files){
   if(!allowed.includes(file.type)||file.size>5*1024*1024){
    messageBox.textContent="Solo se permiten JPG, PNG o WebP de hasta 5 MB por foto.";
    return;
   }
  }
-
  const button=$("uploadGalleryButton");
  button.disabled=true;
  messageBox.textContent="Publicando fotografías...";
-
  try{
   for(const file of files){
    const extension=file.name.split(".").pop().toLowerCase();
    const path=(window.crypto?.randomUUID?.()||String(Date.now())+"-"+Math.random().toString(36).slice(2))+"."+extension;
-
-   const {error}=await db.storage.from(GALLERY_BUCKET).upload(
-    path,
-    file,
-    {
-     cacheControl:"3600",
-     upsert:false,
-     contentType:file.type
-    }
-   );
-
+   const {error}=await db.storage.from(GALLERY_BUCKET).upload(path,file,{
+    cacheControl:"3600",
+    upsert:false,
+    contentType:file.type
+   });
    if(error)throw error;
   }
-
   input.value="";
   messageBox.textContent="¡Tus fotografías ya están publicadas! 💗";
-
-  await Promise.all([
-   loadAdminGallery(),
-   loadPublicGallery()
-  ]);
-
+  await Promise.all([loadAdminGallery(),loadPublicGallery()]);
  }catch(error){
   messageBox.textContent="No se pudieron publicar todas las fotos: "+error.message;
  }finally{
@@ -535,22 +530,14 @@ async function uploadGalleryPhotos(){
 
 async function deleteGalleryPhoto(path){
  if(!confirm("¿Querés retirar esta fotografía de la galería?"))return;
-
  $("galleryAdminMessage").textContent="Eliminando fotografía...";
-
  const {error}=await db.storage.from(GALLERY_BUCKET).remove([path]);
-
  if(error){
   $("galleryAdminMessage").textContent="No se pudo eliminar: "+error.message;
   return;
  }
-
  $("galleryAdminMessage").textContent="Fotografía eliminada. 💗";
-
- await Promise.all([
-  loadAdminGallery(),
-  loadPublicGallery()
- ]);
+ await Promise.all([loadAdminGallery(),loadPublicGallery()]);
 }
 
 /* INICIO */
@@ -558,28 +545,20 @@ async function init(){
  try{
   $("service").innerHTML='<option value="">Conectando con Supabase...</option>';
   $("design").innerHTML='<option value="">Conectando con Supabase...</option>';
-
   if(!window.supabase||!window.supabase.createClient){
    throw new Error("No se pudo cargar la biblioteca de Supabase.");
   }
-
   if(!SUPABASE_URL.startsWith("https://")||!SUPABASE_ANON_KEY.startsWith("sb_publishable_")){
    throw new Error("La configuración de Supabase es incorrecta.");
   }
-
   db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
-
   await loadCatalog();
   await loadPublicGallery();
-
   message("¡Servicios y diseños cargados correctamente! 💗","ok");
-
  }catch(error){
   console.error("ERROR REAL DE INICIO:",error);
-
   $("service").innerHTML='<option value="">Error al cargar servicios</option>';
   $("design").innerHTML='<option value="">Error al cargar diseños</option>';
-
   const detalle=[error.message,error.details,error.hint,error.code].filter(Boolean).join(" | ");
   message("Error de conexión: "+detalle,"error");
  }
@@ -589,37 +568,26 @@ $("service").addEventListener("change",()=>{
  updatePrice();
  $("timeInfo").textContent="Volvé a comprobar el horario con el servicio elegido.";
 });
-
 $("design").addEventListener("change",()=>{
  updatePrice();
  $("timeInfo").textContent="Volvé a comprobar el horario con el diseño elegido.";
 });
-
 $("date").addEventListener("change",()=>{
  $("timeInfo").textContent="Elegí una hora y comprobá su disponibilidad.";
  loadOccupiedTimes();
 });
-
 $("time").addEventListener("change",()=>{
  $("timeInfo").textContent="Recordá comprobar la disponibilidad de esta hora.";
 });
-
 $("checkSlots").addEventListener("click",checkSlots);
 $("book").addEventListener("click",createBooking);
 
-// Fechas disponibles: hoy hasta 30 días
+/* Fechas disponibles: desde hoy, sin límite de 30 días */
 const today=new Date();
 const localToday=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
-
-const maxDate=new Date(today);
-maxDate.setDate(maxDate.getDate()+30);
-
-const localMax=new Date(maxDate.getTime()-maxDate.getTimezoneOffset()*60000).toISOString().slice(0,10);
-
 $("date").min=localToday;
-$("date").max=localMax;
 
-// ADMINISTRACIÓN PRIVADA
+/* ADMINISTRACIÓN PRIVADA */
 const weekdayNames=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
 function adminText(v){
@@ -631,7 +599,6 @@ function openAdminLogin(){
  $("adminDashboard").style.display="none";
  $("adminLogin").scrollIntoView({behavior:"smooth"});
 }
-
 function hideAdminSections(){
  $("adminLogin").style.display="none";
  $("adminDashboard").style.display="none";
@@ -639,7 +606,6 @@ function hideAdminSections(){
 
 async function verifyAdmin(){
  const {data,error}=await db.rpc("is_studio_admin");
-
  if(error||data!==true){
   await db.auth.signOut();
   throw new Error("Esta cuenta no tiene permisos de administración.");
@@ -649,22 +615,16 @@ async function verifyAdmin(){
 async function adminSignIn(){
  $("adminLoginButton").disabled=true;
  $("adminLoginMessage").textContent="Verificando acceso...";
-
  try{
   const {error}=await db.auth.signInWithPassword({
    email:$("adminEmail").value.trim(),
    password:$("adminPassword").value
   });
-
   if(error)throw error;
-
   await verifyAdmin();
-
   $("adminPassword").value="";
   $("adminLoginMessage").textContent="";
-
   await showAdminDashboard();
-
  }catch(e){
   $("adminLoginMessage").textContent=e.message||"No se pudo iniciar sesión.";
  }finally{
@@ -674,46 +634,122 @@ async function adminSignIn(){
 
 async function showAdminDashboard(){
  const {data:{user}}=await db.auth.getUser();
-
  $("adminWelcome").textContent="Sesión iniciada: "+(user?.email||"administrador");
  $("adminLogin").style.display="none";
  $("adminDashboard").style.display="block";
-
  await Promise.all([
+  loadAdminStats(),
   loadAdminAppointments(),
   loadAdminHours(),
   loadAdminGallery()
  ]);
-
  $("adminDashboard").scrollIntoView({behavior:"smooth"});
 }
 
+/* ESTADÍSTICAS DE RESERVAS */
+async function loadAdminStats(){
+ const content=$("adminStatsContent"),toggle=$("statsVisibility");
+ content.innerHTML='<p class="hint">Cargando estadísticas...</p>';
+ try{
+  const {data:setting,error:settingError}=await db.from("studio_settings")
+   .select("setting_value").eq("setting_key","stats_visibility").maybeSingle();
+  if(settingError)throw settingError;
+  const visible=setting?.setting_value?.visible!==false;
+  toggle.checked=visible;
+  content.style.display=visible?"block":"none";
+  if(!visible){
+   content.innerHTML="";
+   return;
+  }
+
+  const {data,error}=await db.from("appointment_daily_stats")
+   .select("appointment_date,total_reservations,cancelled_count,completed_count,expired_pending_count,expired_confirmed_count")
+   .order("appointment_date",{ascending:false});
+  if(error)throw error;
+
+  const rows=data||[];
+  const totals=rows.reduce((a,r)=>{
+   a.total+=Number(r.total_reservations||0);
+   a.cancelled+=Number(r.cancelled_count||0);
+   a.completed+=Number(r.completed_count||0);
+   a.pending+=Number(r.expired_pending_count||0);
+   a.confirmed+=Number(r.expired_confirmed_count||0);
+   return a;
+  },{total:0,cancelled:0,completed:0,pending:0,confirmed:0});
+
+  content.innerHTML=`
+   <div class="stats-summary">
+    <div class="stats-card"><span>Reservas archivadas</span><strong>${totals.total}</strong></div>
+    <div class="stats-card"><span>Completadas</span><strong>${totals.completed}</strong></div>
+    <div class="stats-card"><span>Canceladas</span><strong>${totals.cancelled}</strong></div>
+    <div class="stats-card"><span>Pendientes vencidas</span><strong>${totals.pending}</strong></div>
+    <div class="stats-card"><span>Confirmadas vencidas</span><strong>${totals.confirmed}</strong></div>
+   </div>
+   <h4 style="color:#815b61;margin:20px 0 8px">Detalle por día</h4>
+   ${rows.length?rows.map(r=>`
+    <div class="stats-day">
+     <strong>${new Date(r.appointment_date+"T00:00:00").toLocaleDateString("es-AR")}</strong>
+     <span>Total: ${Number(r.total_reservations||0)} · Completadas: ${Number(r.completed_count||0)} · Canceladas: ${Number(r.cancelled_count||0)}</span>
+    </div>
+   `).join(""):'<p class="admin-small">Todavía no hay estadísticas archivadas. Se completarán cuando se ejecute la primera limpieza automática.</p>'}
+  `;
+ }catch(error){
+  content.innerHTML='<p class="admin-small">No se pudieron cargar las estadísticas: '+adminText(error.message)+'</p>';
+ }
+}
+
+async function saveStatsVisibility(){
+ const visible=$("statsVisibility").checked;
+ const box=$("adminStatsMessage");
+ box.textContent="Guardando preferencia...";
+ $("adminStatsContent").style.display=visible?"block":"none";
+ try{
+  const {data:existing,error:readError}=await db.from("studio_settings")
+   .select("id").eq("setting_key","stats_visibility").maybeSingle();
+  if(readError)throw readError;
+
+  const payload={
+   setting_key:"stats_visibility",
+   setting_value:{visible},
+   is_public:false,
+   updated_at:new Date().toISOString()
+  };
+
+  const result=existing
+   ?await db.from("studio_settings").update(payload).eq("id",existing.id)
+   :await db.from("studio_settings").insert(payload);
+
+  if(result.error)throw result.error;
+  box.textContent=visible?"Estadísticas visibles. 💗":"Estadísticas ocultas. 💗";
+  if(visible)await loadAdminStats();
+ }catch(error){
+  box.textContent="No se pudo guardar la preferencia: "+error.message;
+  $("statsVisibility").checked=!visible;
+  $("adminStatsContent").style.display=!visible?"block":"none";
+ }
+}
+
+/* LISTADO DE TURNOS */
 async function loadAdminAppointments(){
  $("adminAppointments").innerHTML='<p class="hint">Cargando reservas...</p>';
-
  const [ar,sr,dr]=await Promise.all([
   db.from("appointments").select("*").order("appointment_date",{ascending:false}).order("appointment_time",{ascending:false}).limit(150),
   db.from("services").select("id,name"),
   db.from("design_options").select("id,name")
  ]);
-
  if(ar.error){
   $("adminAppointments").textContent="Error al cargar reservas: "+ar.error.message;
   return;
  }
-
  const sm=Object.fromEntries((sr.data||[]).map(x=>[x.id,x.name]));
  const dm=Object.fromEntries((dr.data||[]).map(x=>[x.id,x.name]));
-
  if(!ar.data?.length){
   $("adminAppointments").innerHTML='<p class="hint">Todavía no hay reservas.</p>';
   return;
  }
-
  $("adminAppointments").innerHTML=ar.data.map(a=>{
   const day=new Date(a.appointment_date+"T00:00:00").toLocaleDateString("es-AR");
   const active=["confirmed","pending"].includes(a.status);
-
   return `<article class="admin-row">
    <p><strong>${adminText(a.customer_name)}</strong> · ${adminText(a.customer_phone)}</p>
    <p>📅 ${day} · 🕒 ${adminText(String(a.appointment_time).slice(0,5))}</p>
@@ -723,7 +759,7 @@ async function loadAdminAppointments(){
    <p><strong>Estado:</strong> ${adminText(a.status)}</p>
    ${active?`
     <div class="admin-grid">
-     <div><label>Nueva fecha</label><input id="rd-${a.id}" type="date" min="${localToday}" max="${localMax}" value="${adminText(a.appointment_date)}"></div>
+     <div><label>Nueva fecha</label><input id="rd-${a.id}" type="date" min="${localToday}" value="${adminText(a.appointment_date)}"></div>
      <div><label>Nuevo horario</label><input id="rt-${a.id}" type="time" value="${adminText(String(a.appointment_time).slice(0,5))}"></div>
     </div>
     <button class="admin-success" type="button" onclick="adminReschedule('${a.id}')">Reprogramar</button>
@@ -735,19 +771,15 @@ async function loadAdminAppointments(){
 
 async function adminCancel(id){
  if(!confirm("¿Cancelar este turno? Quedará guardado en el historial."))return;
-
  const {data,error}=await db.rpc("admin_cancel_appointment",{p_appointment_id:id});
-
  if(error){
   alert("No se pudo cancelar: "+error.message);
   return;
  }
-
  if(!data){
   alert("El turno no está activo.");
   return;
  }
-
  await loadAdminAppointments();
  alert("Turno cancelado. Se conservó en el historial.");
 }
@@ -755,42 +787,35 @@ async function adminCancel(id){
 async function adminReschedule(id){
  const date=$("rd-"+id)?.value;
  const time=$("rt-"+id)?.value;
-
  if(!date||!time){
   alert("Elegí fecha y hora.");
   return;
  }
-
  if(!confirm("¿Confirmás reprogramar este turno?"))return;
-
  const {data,error}=await db.rpc("admin_reschedule_appointment",{
   p_appointment_id:id,
   p_new_date:date,
   p_new_time:time
  });
-
  if(error){
   alert("No se pudo reprogramar: "+error.message);
   return;
  }
-
  if(!data){
   alert("No se pudo reprogramar.");
   return;
  }
-
  await loadAdminAppointments();
  alert("¡Turno reprogramado correctamente!");
 }
 
+/* HORARIOS DE ATENCIÓN */
 async function loadAdminHours(){
  const {data,error}=await db.from("business_hours").select("*").order("weekday");
-
  if(error){
   $("adminHours").textContent="Error: "+error.message;
   return;
  }
-
  $("adminHours").innerHTML=(data||[]).map(h=>`
   <div class="admin-hours-row" data-hours-id="${h.id}">
    <strong>${weekdayNames[h.weekday]||"Día"}</strong>
@@ -804,28 +829,22 @@ async function loadAdminHours(){
 async function saveAdminHours(){
  $("saveAdminHours").disabled=true;
  $("adminHoursMessage").textContent="Guardando...";
-
  try{
   for(const r of $("adminHours").querySelectorAll("[data-hours-id]")){
    const open=r.querySelector(".hopen").checked;
    const start=r.querySelector(".hstart").value;
    const end=r.querySelector(".hend").value;
-
    if(open&&(!start||!end||start>=end)){
     throw new Error("La apertura debe ser anterior al cierre.");
    }
-
    const {error}=await db.from("business_hours").update({
     is_open:open,
     start_time:open?start:null,
     end_time:open?end:null
    }).eq("id",r.dataset.hoursId);
-
    if(error)throw error;
   }
-
   $("adminHoursMessage").textContent="¡Horarios guardados correctamente! 💗";
-
  }catch(e){
   $("adminHoursMessage").textContent="Error: "+e.message;
  }finally{
@@ -833,23 +852,23 @@ async function saveAdminHours(){
  }
 }
 
+/* EVENTOS DEL PANEL */
+$("statsVisibility").addEventListener("change",saveStatsVisibility);
 $("adminLoginButton").addEventListener("click",adminSignIn);
-
 $("adminPassword").addEventListener("keydown",e=>{
  if(e.key==="Enter")adminSignIn();
 });
-
 $("adminCloseLogin").addEventListener("click",hideAdminSections);
-$("refreshAdmin").addEventListener("click",loadAdminAppointments);
-
+$("refreshAdmin").addEventListener("click",()=>{
+ loadAdminAppointments();
+ loadAdminStats();
+});
 $("adminLogout").addEventListener("click",async()=>{
  await db.auth.signOut();
  hideAdminSections();
 });
-
 $("saveAdminHours").addEventListener("click",saveAdminHours);
 $("uploadGalleryButton").addEventListener("click",uploadGalleryPhotos);
-
 $("adminAccess").addEventListener("click",e=>{
  e.preventDefault();
  openAdminLogin();
@@ -860,3 +879,4 @@ init();
 </script>
 </body>
 </html>
+
