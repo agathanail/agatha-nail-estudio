@@ -70,6 +70,7 @@ header{position:relative;padding-right:58px}
 .stats-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px}
 .stats-toggle{display:flex;align-items:center;gap:9px;font-size:13px;color:#765f60}
 .stats-toggle input{width:auto;accent-color:#a66f77}
+.stats-month-select{width:auto;min-width:180px;max-width:100%;padding:10px 12px;border:1px solid #ead8d5;border-radius:12px;background:#fff;color:#765257;font:inherit;font-size:13px}
 .stats-day{display:flex;justify-content:space-between;gap:12px;padding:10px 2px;border-bottom:1px solid #f0e8e5;font-size:12px}
 .stats-day strong{color:#765257}
 
@@ -212,7 +213,8 @@ Avenida Italia 1402<br>
  <div class="step">Resumen del estudio</div>
  <h3>Estadísticas de reservas</h3>
  <div class="stats-toolbar">
-  <span class="admin-small">Resumen de reservas archivadas automáticamente.</span>
+  <label for="statsMonth" class="admin-small">Consultar estadísticas del mes</label>
+  <select id="statsMonth" class="stats-month-select" aria-label="Seleccionar mes de estadísticas"></select>
   <label class="stats-toggle"><input type="checkbox" id="statsVisibility" checked> Mostrar estadísticas</label>
  </div>
  <div id="adminStatsContent"><p class="hint">Cargando estadísticas...</p></div>
@@ -648,7 +650,9 @@ async function showAdminDashboard(){
 
 /* ESTADÍSTICAS DE RESERVAS */
 async function loadAdminStats(){
- const content=$("adminStatsContent"),toggle=$("statsVisibility");
+ const content=$("adminStatsContent");
+ const toggle=$("statsVisibility");
+ const monthSelect=$("statsMonth");
  content.innerHTML='<p class="hint">Cargando estadísticas...</p>';
  try{
   const {data:setting,error:settingError}=await db.from("studio_settings")
@@ -657,42 +661,101 @@ async function loadAdminStats(){
   const visible=setting?.setting_value?.visible!==false;
   toggle.checked=visible;
   content.style.display=visible?"block":"none";
-  if(!visible){
-   content.innerHTML="";
-   return;
+  if(!visible){content.innerHTML="";return;}
+
+  const [statsResult,appointmentsResult]=await Promise.all([
+   db.from("appointment_daily_stats")
+    .select("appointment_date,total_reservations,cancelled_count,completed_count,expired_pending_count,expired_confirmed_count")
+    .order("appointment_date",{ascending:false}),
+   db.from("appointments").select("appointment_date,status")
+  ]);
+  if(statsResult.error)throw statsResult.error;
+  if(appointmentsResult.error)throw appointmentsResult.error;
+
+  const stats=statsResult.data||[];
+  const appointments=appointmentsResult.data||[];
+  const parts=new Intl.DateTimeFormat("en-CA",{
+   timeZone:"America/Argentina/Buenos_Aires",
+   year:"numeric",month:"2-digit",day:"2-digit"
+  }).format(new Date()).split("-");
+  const today=parts[0]+"-"+parts[1]+"-"+parts[2];
+  const currentMonth=today.slice(0,7);
+  const dates=[...stats.map(r=>r.appointment_date),...appointments.map(a=>a.appointment_date),today].filter(Boolean).sort();
+  const firstMonth=dates[0].slice(0,7);
+  const lastMonth=dates[dates.length-1].slice(0,7);
+  const months=[];
+  let cursor=firstMonth;
+  while(cursor<=lastMonth){
+   months.push(cursor);
+   const [year,month]=cursor.split("-").map(Number);
+   cursor=new Date(Date.UTC(year,month,1)).toISOString().slice(0,7);
   }
 
-  const {data,error}=await db.from("appointment_daily_stats")
-   .select("appointment_date,total_reservations,cancelled_count,completed_count,expired_pending_count,expired_confirmed_count")
-   .order("appointment_date",{ascending:false});
-  if(error)throw error;
+  const previousMonth=monthSelect.value;
+  monthSelect.innerHTML=months.slice().reverse().map(month=>{
+   const [year,number]=month.split("-").map(Number);
+   const label=new Date(year,number-1,1).toLocaleDateString("es-AR",{month:"long",year:"numeric"});
+   return '<option value="'+month+'">'+label.charAt(0).toUpperCase()+label.slice(1)+'</option>';
+  }).join("");
+  const selected=months.includes(previousMonth)?previousMonth:currentMonth;
+  monthSelect.value=selected;
 
-  const rows=data||[];
-  const totals=rows.reduce((a,r)=>{
-   a.total+=Number(r.total_reservations||0);
-   a.cancelled+=Number(r.cancelled_count||0);
-   a.completed+=Number(r.completed_count||0);
-   a.pending+=Number(r.expired_pending_count||0);
-   a.confirmed+=Number(r.expired_confirmed_count||0);
-   return a;
-  },{total:0,cancelled:0,completed:0,pending:0,confirmed:0});
+  const days={};
+  function getDay(date){
+   if(!days[date])days[date]={total:0,completed:0,cancelled:0,pending:0,confirmed:0,active:0};
+   return days[date];
+  }
 
-  content.innerHTML=`
+  // Reservas archivadas y eliminadas de la agenda.
+  stats.filter(r=>r.appointment_date.startsWith(selected)).forEach(r=>{
+   const d=getDay(r.appointment_date);
+   d.total+=Number(r.total_reservations||0);
+   d.cancelled+=Number(r.cancelled_count||0);
+   d.completed+=Number(r.completed_count||0);
+   d.pending+=Number(r.expired_pending_count||0);
+   d.confirmed+=Number(r.expired_confirmed_count||0);
+  });
+
+  // Reservas que todavía permanecen en la agenda.
+  appointments.filter(a=>a.appointment_date.startsWith(selected)).forEach(a=>{
+   const d=getDay(a.appointment_date);
+   d.total++;
+   if(a.status==="completed")d.completed++;
+   else if(a.status==="cancelled")d.cancelled++;
+   else if(a.status==="pending"){
+    if(a.appointment_date<today)d.pending++;
+    else d.active++;
+   }else if(a.status==="confirmed"){
+    if(a.appointment_date<today)d.confirmed++;
+    else d.active++;
+   }
+  });
+
+  const rows=Object.entries(days).sort((a,b)=>b[0].localeCompare(a[0]));
+  const totals=rows.reduce((sum,item)=>{
+   const d=item[1];
+   sum.total+=d.total;sum.completed+=d.completed;sum.cancelled+=d.cancelled;
+   sum.pending+=d.pending;sum.confirmed+=d.confirmed;sum.active+=d.active;
+   return sum;
+  },{total:0,completed:0,cancelled:0,pending:0,confirmed:0,active:0});
+
+  content.innerHTML=\`
    <div class="stats-summary">
-    <div class="stats-card"><span>Reservas archivadas</span><strong>${totals.total}</strong></div>
-    <div class="stats-card"><span>Completadas</span><strong>${totals.completed}</strong></div>
-    <div class="stats-card"><span>Canceladas</span><strong>${totals.cancelled}</strong></div>
-    <div class="stats-card"><span>Pendientes vencidas</span><strong>${totals.pending}</strong></div>
-    <div class="stats-card"><span>Confirmadas vencidas</span><strong>${totals.confirmed}</strong></div>
+    <div class="stats-card"><span>Total de reservas del mes</span><strong>\${totals.total}</strong></div>
+    <div class="stats-card"><span>Turnos activos</span><strong>\${totals.active}</strong></div>
+    <div class="stats-card"><span>Completadas</span><strong>\${totals.completed}</strong></div>
+    <div class="stats-card"><span>Canceladas</span><strong>\${totals.cancelled}</strong></div>
+    <div class="stats-card"><span>Pendientes vencidas</span><strong>\${totals.pending}</strong></div>
+    <div class="stats-card"><span>Confirmadas vencidas</span><strong>\${totals.confirmed}</strong></div>
    </div>
-   <h4 style="color:#815b61;margin:20px 0 8px">Detalle por día</h4>
-   ${rows.length?rows.map(r=>`
+   <h4 style="color:#815b61;margin:20px 0 8px">Detalle diario del mes</h4>
+   \${rows.length?rows.map(([date,d])=>\`
     <div class="stats-day">
-     <strong>${new Date(r.appointment_date+"T00:00:00").toLocaleDateString("es-AR")}</strong>
-     <span>Total: ${Number(r.total_reservations||0)} · Completadas: ${Number(r.completed_count||0)} · Canceladas: ${Number(r.cancelled_count||0)}</span>
+     <strong>\${new Date(date+"T00:00:00").toLocaleDateString("es-AR")}</strong>
+     <span>Total: \${d.total} · Completadas: \${d.completed} · Canceladas: \${d.cancelled}</span>
     </div>
-   `).join(""):'<p class="admin-small">Todavía no hay estadísticas archivadas. Se completarán cuando se ejecute la primera limpieza automática.</p>'}
-  `;
+   \`).join(""):'<p class="admin-small">Todavía no hay reservas registradas para este mes.</p>'}
+  \`;
  }catch(error){
   content.innerHTML='<p class="admin-small">No se pudieron cargar las estadísticas: '+adminText(error.message)+'</p>';
  }
@@ -854,6 +917,7 @@ async function saveAdminHours(){
 
 /* EVENTOS DEL PANEL */
 $("statsVisibility").addEventListener("change",saveStatsVisibility);
+$("statsMonth").addEventListener("change",loadAdminStats);
 $("adminLoginButton").addEventListener("click",adminSignIn);
 $("adminPassword").addEventListener("keydown",e=>{
  if(e.key==="Enter")adminSignIn();
@@ -879,4 +943,5 @@ init();
 </script>
 </body>
 </html>
+
 
