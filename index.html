@@ -6,6 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ágatha Nail Estudio</title>
 <meta name="description" content="Reservá tu turno en Ágatha Nail Estudio. Avenida Italia 1402.">
+<meta name="theme-color" content="#f3dedb">
+<link rel="manifest" href="./manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -62,6 +64,19 @@ header{position:relative;padding-right:58px}
 .admin-success{background:#7d9a82}
 .admin-small{font-size:12px;color:#907d7b;line-height:1.6}
 
+/* Notificaciones */
+.notification-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;padding:0 7px;border-radius:20px;background:#a66f77;color:#fff;font-size:12px;font-weight:700}
+.notification-actions{display:flex;gap:8px;flex-wrap:wrap}
+.notification-actions button{margin:8px 5px 0 0}
+.notification-item{padding:15px;border:1px solid #f0e1de;border-radius:14px;background:#fff;margin:10px 0}
+.notification-item.unread{background:#fff8f6;border-color:#dfbfc0}
+.notification-item p{margin:5px 0;font-size:13px;line-height:1.5}
+.notification-item time{font-size:11px;color:#9b8583}
+.notification-item button{margin-top:8px}
+.push-status{padding:12px 14px;border-radius:12px;background:#fbf1ef;color:#96777a;font-size:12px;line-height:1.5;margin-top:12px}
+.notification-empty{padding:16px;text-align:center;color:#9b8583;font-size:13px}
+
 /* Estadísticas */
 .stats-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:12px;margin:16px 0}
 .stats-card{padding:15px;border:1px solid #f0e1de;border-radius:15px;background:#fff}
@@ -109,6 +124,7 @@ header{position:relative;padding-right:58px}
  .admin-panel h3{font-size:22px}
  .admin-hours-row{grid-template-columns:1fr 1fr}
  .admin-hours-row strong{grid-column:1/-1}
+ .notification-item{padding:13px}
 }
 </style>
 </head>
@@ -206,6 +222,26 @@ Avenida Italia 1402<br>
 <div class="step">Panel privado</div>
 <h3>Administración de turnos</h3>
 <p class="admin-small" id="adminWelcome"></p>
+
+<!-- CENTRO DE NOTIFICACIONES -->
+<div class="panel" id="adminNotificationsPanel">
+ <div class="notification-heading">
+  <div>
+   <div class="step">Avisos del estudio</div>
+   <h3>Notificaciones <span id="notificationCount" class="notification-count">0</span></h3>
+  </div>
+ </div>
+ <p class="admin-small">Acá vas a encontrar avisos de nuevas reservas, cancelaciones y reprogramaciones.</p>
+ <div class="notification-actions">
+  <button type="button" id="activatePushButton" class="admin-success">🔔 Activar notificaciones en este teléfono</button>
+  <button type="button" id="refreshNotifications" class="admin-secondary">Actualizar avisos</button>
+ </div>
+ <div id="pushStatus" class="push-status" role="status">Las notificaciones de este teléfono todavía no fueron verificadas.</div>
+ <div id="adminNotificationsList">
+  <p class="hint">Cargando notificaciones...</p>
+ </div>
+</div>
+
 <button type="button" id="refreshAdmin" class="admin-secondary">Actualizar turnos</button>
 <button type="button" id="adminLogout" class="admin-secondary">Cerrar sesión</button>
 
@@ -250,6 +286,7 @@ Avenida Italia 1402<br>
 const SUPABASE_URL="https://rtouaegbhyilabbuqwsv.supabase.co";
 const SUPABASE_ANON_KEY="sb_publishable_ygTauRIxLoirW3p1ENuYzg_H6qxOWp2";
 const WHATSAPP_NUMBER="5493704564674";
+const PUSH_FUNCTION="agathapush";
 
 let db=null;
 let services=[];
@@ -260,7 +297,6 @@ const GALLERY_BUCKET="nail-gallery";
 const $=id=>document.getElementById(id);
 const money=value=>"$"+Number(value||0).toLocaleString("es-AR");
 
-/* Convierte los minutos internos a horas y minutos para mostrarlos */
 function formatDuration(minutes){
  const total=Math.max(0,Number(minutes)||0);
  const hours=Math.floor(total/60);
@@ -486,12 +522,10 @@ async function loadPublicGallery(){
 
   if(!photos.length){
    section.style.display="none";
-
    if(galleryTimer){
     clearInterval(galleryTimer);
     galleryTimer=null;
    }
-
    return;
   }
 
@@ -641,6 +675,13 @@ async function init(){
   await loadCatalog();
   await loadPublicGallery();
 
+  // Registrar el service worker que permite recibir notificaciones.
+  if("serviceWorker" in navigator){
+   navigator.serviceWorker.register("./sw.js")
+    .then(()=>console.log("Service Worker registrado."))
+    .catch(error=>console.error("No se pudo registrar el Service Worker:",error));
+  }
+
   message("¡Servicios y diseños cargados correctamente! 💗","ok");
 
  }catch(error){
@@ -682,7 +723,6 @@ $("time").addEventListener("change",()=>{
 $("checkSlots").addEventListener("click",checkSlots);
 $("book").addEventListener("click",createBooking);
 
-/* Fechas disponibles: desde hoy, sin límite de 30 días */
 const today=new Date();
 const localToday=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
 $("date").min=localToday;
@@ -757,10 +797,232 @@ async function showAdminDashboard(){
   loadAdminStats(),
   loadAdminAppointments(),
   loadAdminHours(),
-  loadAdminGallery()
+  loadAdminGallery(),
+  loadAdminNotifications(),
+  updatePushStatus()
  ]);
 
  $("adminDashboard").scrollIntoView({behavior:"smooth"});
+}
+
+/* NOTIFICACIONES DEL ADMINISTRADOR */
+function formatNotificationDate(value){
+ if(!value)return "";
+ const date=new Date(value);
+ return date.toLocaleString("es-AR",{
+  day:"2-digit",
+  month:"2-digit",
+  year:"numeric",
+  hour:"2-digit",
+  minute:"2-digit"
+ });
+}
+
+async function loadAdminNotifications(){
+ const list=$("adminNotificationsList");
+ list.innerHTML='<p class="hint">Cargando notificaciones...</p>';
+
+ try{
+  const {data,error}=await db
+   .from("admin_notifications")
+   .select("id,appointment_id,event_type,title,message,created_at,read_at")
+   .order("created_at",{ascending:false})
+   .limit(50);
+
+  if(error)throw error;
+
+  const notifications=data||[];
+  const unread=notifications.filter(item=>!item.read_at).length;
+
+  $("notificationCount").textContent=String(unread);
+
+  if(!notifications.length){
+   list.innerHTML='<div class="notification-empty">Todavía no hay notificaciones. Los avisos de reservas aparecerán acá. 💗</div>';
+   return;
+  }
+
+  list.innerHTML=notifications.map(item=>`
+   <article class="notification-item ${item.read_at?"":"unread"}">
+    <p><strong>${adminText(item.title||"Aviso de Ágatha")}</strong></p>
+    <p>${adminText(item.message||"Tenés una nueva notificación.")}</p>
+    <time>${adminText(formatNotificationDate(item.created_at))}</time>
+    ${item.read_at
+      ?'<p class="admin-small">Leída</p>'
+      :`<button type="button" class="admin-secondary" data-read-notification="${adminText(item.id)}">Marcar como leída</button>`
+    }
+   </article>
+  `).join("");
+
+  list.querySelectorAll("[data-read-notification]").forEach(button=>{
+   button.addEventListener("click",()=>{
+    markAdminNotificationRead(button.dataset.readNotification);
+   });
+  });
+
+ }catch(error){
+  console.error("Error cargando notificaciones:",error);
+  list.innerHTML='<p class="admin-small">No se pudieron cargar las notificaciones: '+adminText(error.message)+'</p>';
+ }
+}
+
+async function markAdminNotificationRead(id){
+ const {error}=await db
+  .from("admin_notifications")
+  .update({read_at:new Date().toISOString()})
+  .eq("id",id);
+
+ if(error){
+  alert("No se pudo marcar como leída: "+error.message);
+  return;
+ }
+
+ await loadAdminNotifications();
+}
+
+/* ACTIVACIÓN DE NOTIFICACIONES PUSH */
+function urlBase64ToUint8Array(base64String){
+ const padding="=".repeat((4-base64String.length%4)%4);
+ const base64=(base64String+padding)
+  .replace(/-/g,"+")
+  .replace(/_/g,"/");
+
+ const raw=window.atob(base64);
+ const output=new Uint8Array(raw.length);
+
+ for(let i=0;i<raw.length;i++){
+  output[i]=raw.charCodeAt(i);
+ }
+
+ return output;
+}
+
+async function updatePushStatus(){
+ const status=$("pushStatus");
+
+ if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)){
+  status.textContent="Este navegador no permite notificaciones push. En iPhone, abrí la página desde el ícono instalado en la pantalla de inicio.";
+  $("activatePushButton").disabled=true;
+  return;
+ }
+
+ if(Notification.permission==="denied"){
+  status.textContent="Las notificaciones están bloqueadas en el navegador. Habilitalas desde la configuración del dispositivo.";
+  return;
+ }
+
+ try{
+  const registration=await navigator.serviceWorker.getRegistration("./");
+
+  if(registration){
+   const subscription=await registration.pushManager.getSubscription();
+
+   if(subscription){
+    status.textContent="Este teléfono ya tiene una suscripción de notificaciones. 💗";
+    $("activatePushButton").textContent="🔔 Notificaciones activadas";
+    return;
+   }
+  }
+
+  status.textContent="Todavía no activaste las notificaciones en este teléfono.";
+ }catch(error){
+  console.error(error);
+  status.textContent="No se pudo verificar el estado de las notificaciones.";
+ }
+}
+
+async function activatePushNotifications(){
+ const button=$("activatePushButton");
+ const status=$("pushStatus");
+
+ if(!db){
+  status.textContent="La conexión todavía no está lista. Recargá la página.";
+  return;
+ }
+
+ if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)){
+  status.textContent="Este navegador no admite notificaciones push.";
+  return;
+ }
+
+ if(!window.isSecureContext){
+  status.textContent="Las notificaciones necesitan una conexión segura HTTPS.";
+  return;
+ }
+
+ // iOS requiere que la web esté instalada en la pantalla de inicio.
+ const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+ const isStandalone=window.navigator.standalone===true||
+  window.matchMedia("(display-mode: standalone)").matches;
+
+ if(isIOS&&!isStandalone){
+  status.textContent="En iPhone, primero agregá Ágatha a la pantalla de inicio desde Compartir → Añadir a pantalla de inicio. Después abrí la aplicación desde ese ícono.";
+  return;
+ }
+
+ button.disabled=true;
+ status.textContent="Preparando las notificaciones...";
+
+ try{
+  const {data:{user},error:userError}=await db.auth.getUser();
+
+  if(userError||!user){
+   throw new Error("Iniciá sesión como administradora antes de activar las notificaciones.");
+  }
+
+  await verifyAdmin();
+
+  const permission=await Notification.requestPermission();
+
+  if(permission!=="granted"){
+   throw new Error("No se concedió permiso para enviar notificaciones.");
+  }
+
+  const registration=await navigator.serviceWorker.register("./sw.js");
+  await navigator.serviceWorker.ready;
+
+  const {data:keyData,error:keyError}=await db.functions.invoke(PUSH_FUNCTION,{
+   body:{action:"getPublicKey"}
+  });
+
+  if(keyError)throw keyError;
+
+  const publicKey=keyData?.publicKey;
+
+  if(!publicKey){
+   throw new Error("No se recibió la clave pública de notificaciones.");
+  }
+
+  let subscription=await registration.pushManager.getSubscription();
+
+  if(!subscription){
+   subscription=await registration.pushManager.subscribe({
+    userVisibleOnly:true,
+    applicationServerKey:urlBase64ToUint8Array(publicKey)
+   });
+  }
+
+  const {data:subscribeData,error:subscribeError}=await db.functions.invoke(PUSH_FUNCTION,{
+   body:{
+    action:"subscribe",
+    subscription:subscription.toJSON()
+   }
+  });
+
+  if(subscribeError)throw subscribeError;
+
+  if(!subscribeData?.success){
+   throw new Error(subscribeData?.error||"No se pudo registrar el teléfono.");
+  }
+
+  status.textContent="¡Notificaciones activadas correctamente en este teléfono! 💗";
+  button.textContent="🔔 Notificaciones activadas";
+
+ }catch(error){
+  console.error("Error activando notificaciones:",error);
+  status.textContent=error.message||"No se pudieron activar las notificaciones.";
+ }finally{
+  button.disabled=false;
+ }
 }
 
 /* ESTADÍSTICAS DE RESERVAS */
@@ -867,7 +1129,6 @@ async function loadAdminStats(){
    return days[date];
   }
 
-  // Reservas archivadas y eliminadas de la agenda.
   stats.filter(r=>r.appointment_date.startsWith(selected))
    .forEach(r=>{
     const d=getDay(r.appointment_date);
@@ -879,7 +1140,6 @@ async function loadAdminStats(){
     d.confirmed+=Number(r.expired_confirmed_count||0);
    });
 
-  // Reservas que todavía permanecen en la agenda.
   appointments.filter(a=>a.appointment_date.startsWith(selected))
    .forEach(a=>{
     const d=getDay(a.appointment_date);
@@ -1064,6 +1324,7 @@ async function adminCancel(id){
  }
 
  await loadAdminAppointments();
+ await loadAdminNotifications();
  alert("Turno cancelado. Se conservó en el historial.");
 }
 
@@ -1095,6 +1356,7 @@ async function adminReschedule(id){
  }
 
  await loadAdminAppointments();
+ await loadAdminNotifications();
  alert("¡Turno reprogramado correctamente!");
 }
 
@@ -1166,7 +1428,11 @@ $("adminCloseLogin").addEventListener("click",hideAdminSections);
 $("refreshAdmin").addEventListener("click",()=>{
  loadAdminAppointments();
  loadAdminStats();
+ loadAdminNotifications();
 });
+
+$("refreshNotifications").addEventListener("click",loadAdminNotifications);
+$("activatePushButton").addEventListener("click",activatePushNotifications);
 
 $("adminLogout").addEventListener("click",async()=>{
  await db.auth.signOut();
